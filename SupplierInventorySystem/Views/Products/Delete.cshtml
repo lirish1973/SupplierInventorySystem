@@ -1,0 +1,126 @@
+﻿@model SupplierInventorySystem.Models.Product
+
+@{
+    ViewData["Title"] = "מחיקת מוצר";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> אישור מחיקת מוצר
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-exclamation-circle"></i> אזהרה!
+                        </h4>
+                        <p class="mb-0">
+                            האם אתה בטוח שברצונך למחוק את המוצר הזה? <strong>פעולה זו אינה ניתנת לביטול!</strong>
+                        </p>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body bg-light">
+                            <h3 class="mb-3">פרטי המוצר למחיקה:</h3>
+                            <dl class="row">
+                                <dt class="col-sm-4">מק״ט:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-primary fs-5">@Model.Sku</span>
+                                </dd>
+
+                                <dt class="col-sm-4">שם מוצר:</dt>
+                                <dd class="col-sm-8"><strong class="fs-4">@Model.Name</strong></dd>
+
+                                <dt class="col-sm-4">תיאור:</dt>
+                                <dd class="col-sm-8">@(Model.Description ?? "לא צוין")</dd>
+
+                                <dt class="col-sm-4">קטגוריה:</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.Category != null)
+                                    {
+                                        <span class="badge bg-secondary">@Model.Category.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">לא משויך</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-4">יחידת מידה:</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.DefaultUnit != null)
+                                    {
+                                        <span class="badge bg-info">@Model.DefaultUnit.Code</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">לא צוין</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-4">סוג:</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.IsService)
+                                    {
+                                        <span class="badge bg-warning">שירות</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">מוצר</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-4">סטטוס:</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.Active)
+                                    {
+                                        <span class="badge bg-success">פעיל</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">לא פעיל</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-4">תאריך יצירה:</dt>
+                                <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong><i class="fas fa-info-circle"></i> שים לב:</strong>
+                        מחיקת המוצר תמחק גם את כל הנתונים הקשורים אליו:
+                        <ul class="mb-0 mt-2">
+                            <li>וריאנטים של המוצר</li>
+                            <li>קשרים לספקים</li>
+                            <li>היסטוריית מחירים</li>
+                            <li>רשומות מלאי (אם קיימות)</li>
+                        </ul>
+                    </div>
+
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="fas fa-trash-alt"></i> כן, מחק את המוצר
+                                </button>
+                                <a asp-action="Index" class="btn btn-success btn-lg">
+                                    <i class="fas fa-times"></i> לא, בטל
+                                </a>
+                            </div>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
+                                <i class="fas fa-eye"></i> צפה בפרטים
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

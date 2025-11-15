@@ -1,0 +1,259 @@
+﻿@model IEnumerable<SupplierInventorySystem.Models.Product>
+
+@{
+    ViewData["Title"] = "ניהול מוצרים";
+}
+
+<div class="container-fluid" dir="rtl">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-4">
+                <i class="fas fa-box-open"></i> ניהול מוצרים
+            </h1>
+        </div>
+        <div class="col-md-4 text-start">
+            <a asp-action="Create" class="btn btn-success btn-lg">
+                <i class="fas fa-plus"></i> הוסף מוצר חדש
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- סינון וחיפוש -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">חיפוש:</label>
+                        <div class="input-group">
+                            <input type="text" name="searchString" value="@ViewData["CurrentFilter"]"
+                                   class="form-control" placeholder="חפש לפי שם, מק״ט או תיאור...">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> חפש
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">קטגוריה:</label>
+                        <select name="categoryId" class="form-select">
+                            <option value="">-- כל הקטגוריות --</option>
+                            @foreach (var item in (SelectList)ViewBag.Categories)
+                            {
+                                <option value="@item.Value" selected="@(item.Value == ViewData["CurrentCategory"]?.ToString())">
+                                    @item.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">סטטוס:</label>
+                        <select name="activeOnly" class="form-select">
+                            <option value="true" selected="@(ViewData["ActiveOnly"]?.ToString() == "True")">פעילים בלבד</option>
+                            <option value="false" selected="@(ViewData["ActiveOnly"]?.ToString() == "False")">הכל</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">&nbsp;</label>
+                        <div class="d-grid">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> נקה
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- טבלת מוצרים -->
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 80px;"></th>
+                            <th style="width: 120px;">
+                                <a asp-action="Index" asp-route-sortOrder="@ViewData["SkuSortParm"]"
+                                   asp-route-searchString="@ViewData["CurrentFilter"]"
+                                   asp-route-categoryId="@ViewData["CurrentCategory"]"
+                                   asp-route-activeOnly="@ViewData["ActiveOnly"]"
+                                   class="text-white text-decoration-none">
+                                    מק״ט <i class="fas fa-sort"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]"
+                                   asp-route-searchString="@ViewData["CurrentFilter"]"
+                                   asp-route-categoryId="@ViewData["CurrentCategory"]"
+                                   asp-route-activeOnly="@ViewData["ActiveOnly"]"
+                                   class="text-white text-decoration-none">
+                                    שם מוצר <i class="fas fa-sort"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a asp-action="Index" asp-route-sortOrder="@ViewData["CategorySortParm"]"
+                                   asp-route-searchString="@ViewData["CurrentFilter"]"
+                                   asp-route-categoryId="@ViewData["CurrentCategory"]"
+                                   asp-route-activeOnly="@ViewData["ActiveOnly"]"
+                                   class="text-white text-decoration-none">
+                                    קטגוריה <i class="fas fa-sort"></i>
+                                </a>
+                            </th>
+                            <th class="text-center">יחידה</th>
+                            <th class="text-center">סוג</th>
+                            <th class="text-center">סטטוס</th>
+                            <th class="text-center">פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr class="@(!item.Active ? "table-secondary" : "")">
+                                <td class="text-center">
+                                    @if (item.IsService)
+                                    {
+                                        <i class="fas fa-concierge-bell fa-2x text-info" title="שירות"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-box fa-2x text-primary" title="מוצר"></i>
+                                    }
+                                </td>
+                                <td>
+                                    <strong class="text-primary">@Html.DisplayFor(modelItem => item.Sku)</strong>
+                                </td>
+                                <td>
+                                    <strong>@Html.DisplayFor(modelItem => item.Name)</strong>
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        <br>
+                                        <small class="text-muted">
+                                            @(item.Description.Length > 60 ? item.Description.Substring(0, 60) + "..." : item.Description)
+                                        </small>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Category != null)
+                                    {
+                                        <span class="badge bg-secondary">@item.Category.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (item.DefaultUnit != null)
+                                    {
+                                        <span class="badge bg-info">@item.DefaultUnit.Code</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (item.IsService)
+                                    {
+                                        <span class="badge bg-warning">שירות</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">מוצר</span>
+                                    }
+                                    @if (item.TrackSerials)
+                                    {
+                                        <br>
+                                
+                                        <small class="badge bg-secondary mt-1">S/N</small>
+                                    }
+                                    @if (item.TrackLots)
+                                    {
+                                        <br>
+                                
+                                        <small class="badge bg-secondary mt-1">אצווה</small>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Active)
+                                    {
+                                        <span class="badge bg-success">פעיל</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">לא פעיל</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-info" title="פרטים">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-warning" title="עריכה">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        @if (item.Active)
+                                        {
+                                            <a asp-action="Deactivate" asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-secondary" title="השבת"
+                                               onclick="return confirm('האם להשבית את המוצר?');">
+                                                <i class="fas fa-power-off"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="Activate" asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-success" title="הפעל"
+                                               onclick="return confirm('האם להפעיל את המוצר?');">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                        }
+                                        <a asp-action="Delete" asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-danger" title="מחיקה">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-warning text-center">
+                    <i class="fas fa-info-circle"></i> לא נמצאו מוצרים במערכת
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>סה״כ @Model.Count() מוצרים</strong>
+                    (@Model.Count(p => p.Active) פעילים, @Model.Count(p => !p.Active) לא פעילים)
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-hide success message
+        setTimeout(function() {
+            $('.alert-success').fadeOut('slow');
+        }, 3000);
+    </script>
+}

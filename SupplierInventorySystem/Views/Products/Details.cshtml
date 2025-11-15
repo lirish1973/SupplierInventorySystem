@@ -1,0 +1,428 @@
+﻿@model SupplierInventorySystem.Models.Product
+
+@{
+    ViewData["Title"] = "פרטי מוצר";
+}
+
+<div class="container-fluid" dir="rtl">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">
+                @if (Model.IsService)
+                {
+                    <i class="fas fa-concierge-bell text-info"></i>
+                }
+                else
+                {
+                    <i class="fas fa-box text-primary"></i>
+                }
+                @Model.Name
+            </h1>
+            <p class="lead text-muted">
+                <span class="badge bg-primary fs-6">@Model.Sku</span>
+                @if (Model.Active)
+                {
+                    <span class="badge bg-success fs-6">פעיל</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger fs-6">לא פעיל</span>
+                }
+                @if (Model.IsService)
+                {
+                    <span class="badge bg-warning fs-6">שירות</span>
+                }
+                else
+                {
+                    <span class="badge bg-info fs-6">מוצר</span>
+                }
+            </p>
+        </div>
+        <div class="col-md-4 text-start">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="fas fa-edit"></i> עריכה
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> חזרה
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- פרטים כלליים -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-info-circle"></i> פרטים כלליים</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th width="40%">מק״ט:</th>
+                                <td><strong class="fs-5">@Model.Sku</strong></td>
+                            </tr>
+                            <tr>
+                                <th>שם מוצר:</th>
+                                <td><strong>@Model.Name</strong></td>
+                            </tr>
+                            <tr>
+                                <th>תיאור:</th>
+                                <td>@(Model.Description ?? "לא צוין")</td>
+                            </tr>
+                            <tr>
+                                <th>קטגוריה:</th>
+                                <td>
+                                    @if (Model.Category != null)
+                                    {
+                                        <span class="badge bg-secondary fs-6">@Model.Category.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">לא משויך</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>יחידת מידה:</th>
+                                <td>
+                                    @if (Model.DefaultUnit != null)
+                                    {
+                                        <span class="badge bg-info fs-6">@Model.DefaultUnit.Code</span>
+                                        @if (!string.IsNullOrEmpty(Model.DefaultUnit.Description))
+                                        {
+                                            <br>
+                                    
+                                            <small class="text-muted">@Model.DefaultUnit.Description</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">לא צוין</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>סוג:</th>
+                                <td>
+                                    @if (Model.IsService)
+                                    {
+                                        <span class="badge bg-warning">שירות</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">מוצר פיזי</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>סטטוס:</th>
+                                <td>
+                                    @if (Model.Active)
+                                    {
+                                        <span class="badge bg-success fs-6">✅ פעיל</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger fs-6">⛔ לא פעיל</span>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- הגדרות מלאי -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-warehouse"></i> הגדרות מלאי</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th width="50%">מעקב מספרים סידוריים:</th>
+                                <td>
+                                    @if (Model.TrackSerials)
+                                    {
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> כן</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary"><i class="fas fa-times"></i> לא</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>מעקב אצוות:</th>
+                                <td>
+                                    @if (Model.TrackLots)
+                                    {
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> כן</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary"><i class="fas fa-times"></i> לא</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>נקודת הזמנה חוזרת:</th>
+                                <td>
+                                    @if (Model.ReorderPoint > 0)
+                                    {
+                                        <strong class="text-warning">@Model.ReorderPoint @(Model.DefaultUnit?.Code ?? "")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">לא מוגדר</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>כמות להזמנה:</th>
+                                <td>
+                                    @if (Model.ReorderQty > 0)
+                                    {
+                                        <strong class="text-info">@Model.ReorderQty @(Model.DefaultUnit?.Code ?? "")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">לא מוגדר</span>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <strong><i class="fas fa-clock"></i> תאריך יצירה:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")<br>
+                            <strong><i class="fas fa-edit"></i> עדכון אחרון:</strong> @Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ספקים -->
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-truck"></i> ספקים למוצר זה</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.SupplierProducts != null && Model.SupplierProducts.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ספק</th>
+                                        <th>מק״ט ספק</th>
+                                        <th>זמן אספקה</th>
+                                        <th>כמות מינימלית</th>
+                                        <th>מחיר</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var sp in Model.SupplierProducts)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@sp.Supplier?.Name</strong>
+                                                @if (!string.IsNullOrEmpty(sp.Supplier?.Code))
+                                                {
+                                                    <br>
+                                        
+                                                    <small class="text-muted">@sp.Supplier.Code</small>
+                                                }
+                                            </td>
+                                            <td>@(sp.SupplierSku ?? "-")</td>
+                                            <td>
+                                                @if (sp.LeadTimeDays.HasValue)
+                                                {
+                                                    <span>@sp.LeadTimeDays ימים</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (sp.MinOrderQty.HasValue)
+                                                {
+                                                    <span>@sp.MinOrderQty</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (sp.Price.HasValue)
+                                                {
+                                                    <strong class="text-success">@sp.Price.Value.ToString("N2") @sp.Currency</strong>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> אין ספקים משויכים למוצר זה
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- היסטוריית מחירים -->
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-history"></i> היסטוריית מחירים (10 אחרונים)</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.PriceHistories != null && Model.PriceHistories.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>תאריך</th>
+                                        <th>ספק</th>
+                                        <th>מחיר</th>
+                                        <th>תוקף</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ph in Model.PriceHistories)
+                                    {
+                                        <tr>
+                                            <td>@(ph.EffectiveFrom?.ToString("dd/MM/yyyy") ?? "-")</td>
+                                            <td>@(ph.Supplier?.Name ?? "כללי")</td>
+                                            <td>
+                                                <strong class="text-success">@ph.Price.ToString("N2") @ph.Currency</strong>
+                                            </td>
+                                            <td>
+                                                @if (ph.EffectiveTo.HasValue)
+                                                {
+                                                    <span>עד @ph.EffectiveTo.Value.ToString("dd/MM/yyyy")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">פעיל</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> אין היסטוריית מחירים עבור מוצר זה
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- וריאנטים -->
+    @if (Model.ProductVariants != null && Model.ProductVariants.Any())
+    {
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-secondary text-white">
+                        <h4 class="mb-0"><i class="fas fa-layer-group"></i> וריאנטים</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>מק״ט וריאנט</th>
+                                        <th>מאפיינים</th>
+                                        <th>סטטוס</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var variant in Model.ProductVariants)
+                                    {
+                                        <tr>
+                                            <td><strong>@variant.VariantSku</strong></td>
+                                            <td>@(variant.Attributes ?? "-")</td>
+                                            <td>
+                                                @if (variant.Active)
+                                                {
+                                                    <span class="badge bg-success">פעיל</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">לא פעיל</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- פעולות -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-lg">
+                        <i class="fas fa-edit"></i> ערוך מוצר
+                    </a>
+                    @if (Model.Active)
+                    {
+                        <a asp-action="Deactivate" asp-route-id="@Model.Id" class="btn btn-secondary btn-lg"
+                           onclick="return confirm('האם להשבית את המוצר?');">
+                            <i class="fas fa-power-off"></i> השבת מוצר
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-action="Activate" asp-route-id="@Model.Id" class="btn btn-success btn-lg"
+                           onclick="return confirm('האם להפעיל את המוצר?');">
+                            <i class="fas fa-check"></i> הפעל מוצר
+                        </a>
+                    }
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger btn-lg">
+                        <i class="fas fa-trash"></i> מחק מוצר
+                    </a>
+                    <a asp-action="Index" class="btn btn-primary btn-lg">
+                        <i class="fas fa-list"></i> חזרה לרשימה
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
