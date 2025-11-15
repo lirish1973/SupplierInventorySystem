@@ -27,24 +27,33 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+                               asp-controller="Home" asp-action="Index">
                                 <i class="fas fa-home"></i> דף הבית
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Suppliers" asp-action="Index">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Suppliers" ? "active" : "")"
+                               asp-controller="Suppliers" asp-action="Index">
                                 <i class="fas fa-truck"></i> ספקים
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Products" asp-action="Index">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")"
+                               asp-controller="Products" asp-action="Index">
                                 <i class="fas fa-box"></i> מוצרים
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Users" asp-action="Index">
-                                <i class="fas fa-users"></i> משתמשים
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-chart-bar"></i> דוחות
                             </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel"></i> ייצוא לExcel</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf"></i> ייצוא לPDF</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-chart-line"></i> דוחות מתקדמים</a></li>
+                            </ul>
                         </li>
                     </ul>
                     <span class="navbar-text">

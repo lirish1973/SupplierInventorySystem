@@ -57,6 +57,110 @@ body {
     font-weight: 600;
 }
 
+/* ===========================
+   Dashboard Styles
+   =========================== */
+
+/* Gradient Background for Welcome Card */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Card Borders */
+.border-right-primary {
+    border-right: 4px solid #4e73df !important;
+}
+
+.border-right-success {
+    border-right: 4px solid #1cc88a !important;
+}
+
+.border-right-info {
+    border-right: 4px solid #36b9cc !important;
+}
+
+.border-right-warning {
+    border-right: 4px solid #f6c23e !important;
+}
+
+/* Statistics Cards */
+.text-xs {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+/* Hover Effects */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+/* List Group Items */
+.list-group-item-action:hover {
+    background-color: #f8f9fc;
+    transform: translateX(-5px);
+    transition: all 0.2s;
+}
+
+/* Charts */
+#categoryChart {
+    max-height: 300px;
+}
+
+/* Responsive Grid */
+@media (min-width: 1200px) {
+    .col-lg-2-4 {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+}
+
+/* Pulse Animation for Alerts */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.alert-warning {
+    animation: pulse 2s infinite;
+}
+
+/* Icon Opacity */
+.opacity-25 {
+    opacity: 0.25;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+/* Badge Sizes */
+.badge.fs-6 {
+    font-size: 1rem !important;
+}
+
+
+
+
+
+
+
+
+
 /* Smooth transitions */
 .btn, .card, .alert {
     transition: all 0.3s ease;
