@@ -1,0 +1,130 @@
+﻿@model RegisterViewModel
+@{
+    ViewData["Title"] = "הרשמה";
+    Layout = "~/Views/Shared/_LayoutLogin.cshtml";
+}
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <i class="fas fa-user-plus fa-4x text-success mb-3"></i>
+            <h2 class="mb-1">הרשמה למערכת</h2>
+            <p class="text-muted">צור חשבון חדש</p>
+        </div>
+
+        <form asp-action="Register" method="post" class="login-form">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label">
+                    <i class="fas fa-user"></i> @Html.DisplayNameFor(m => m.Username)
+                </label>
+                <input asp-for="Username" class="form-control"
+                       placeholder="בחר שם משתמש (3-100 תווים)" autofocus />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">
+                    <i class="fas fa-envelope"></i> @Html.DisplayNameFor(m => m.Email)
+                </label>
+                <input asp-for="Email" type="email" class="form-control"
+                       placeholder="example@domain.com" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label">
+                    <i class="fas fa-id-card"></i> @Html.DisplayNameFor(m => m.FullName)
+                </label>
+                <input asp-for="FullName" class="form-control"
+                       placeholder="שם פרטי ושם משפחה" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">
+                    <i class="fas fa-lock"></i> @Html.DisplayNameFor(m => m.Password)
+                </label>
+                <input asp-for="Password" type="password" class="form-control"
+                       id="passwordInput" placeholder="לפחות 6 תווים" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+                <div class="password-strength mt-2">
+                    <small class="text-muted">חוזק סיסמה:</small>
+                    <div class="progress" style="height: 5px;">
+                        <div id="passwordStrength" class="progress-bar" role="progressbar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label">
+                    <i class="fas fa-lock"></i> @Html.DisplayNameFor(m => m.ConfirmPassword)
+                </label>
+                <input asp-for="ConfirmPassword" type="password" class="form-control"
+                       placeholder="הזן את הסיסמה שוב" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>דרישות סיסמה:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>לפחות 6 תווים</li>
+                    <li>מומלץ: אותיות גדולות, קטנות, מספרים וסימנים</li>
+                </ul>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-user-plus"></i> הירשם
+                </button>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="text-center">
+                <p class="mb-0">כבר יש לך חשבון?</p>
+                <a asp-action="Login" class="btn btn-outline-primary btn-sm mt-2">
+                    <i class="fas fa-sign-in-alt"></i> התחבר
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="login-footer">
+        <small class="text-muted">
+            &copy; 2025 מערכת ניהול ספקים ומלאי
+        </small>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Password strength indicator
+        document.getElementById('passwordInput').addEventListener('input', function () {
+            const password = this.value;
+            const strengthBar = document.getElementById('passwordStrength');
+
+            let strength = 0;
+            if (password.length >= 6) strength += 25;
+            if (password.length >= 10) strength += 25;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
+            if (/\d/.test(password) && /\W/.test(password)) strength += 25;
+
+            strengthBar.style.width = strength + '%';
+
+            if (strength < 50) {
+                strengthBar.className = 'progress-bar bg-danger';
+            } else if (strength < 75) {
+                strengthBar.className = 'progress-bar bg-warning';
+            } else {
+                strengthBar.className = 'progress-bar bg-success';
+            }
+        });
+    </script>
+}

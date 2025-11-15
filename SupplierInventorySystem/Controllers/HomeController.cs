@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SupplierInventorySystem.Data;
 using SupplierInventorySystem.Models;
 using SupplierInventorySystem.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace SupplierInventorySystem.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;

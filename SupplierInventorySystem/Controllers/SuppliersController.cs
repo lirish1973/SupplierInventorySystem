@@ -2,9 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using SupplierInventorySystem.Data;
 using SupplierInventorySystem.Models;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace SupplierInventorySystem.Controllers
 {
+    [Authorize]
     public class SuppliersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -149,6 +152,7 @@ namespace SupplierInventorySystem.Controllers
         }
 
         // GET: Suppliers/Delete/5
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -169,6 +173,7 @@ namespace SupplierInventorySystem.Controllers
         // POST: Suppliers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var supplier = await _context.Suppliers.FindAsync(id);

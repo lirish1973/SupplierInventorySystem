@@ -1,0 +1,108 @@
+﻿@model User
+@{
+    ViewData["Title"] = "הפרופיל שלי";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-circle"></i> הפרופיל שלי
+                    </h3>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <div class="text-center mb-4">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-circle fa-5x text-primary"></i>
+                        </div>
+                        <h4 class="mt-3">@Model.FullName</h4>
+                        <p class="text-muted">@@@Model.Username</p>
+                    </div>
+
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th width="40%">
+                                    <i class="fas fa-envelope text-primary"></i> דוא״ל:
+                                </th>
+                                <td>@Model.Email</td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-user-tag text-success"></i> תפקיד:
+                                </th>
+                                <td>
+                                    @if (Model.Role != null)
+                                    {
+                                        <span class="badge bg-success">@Model.Role.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">לא שויך</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-calendar-alt text-info"></i> תאריך הצטרפות:
+                                </th>
+                                <td>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-clock text-warning"></i> התחברות אחרונה:
+                                </th>
+                                <td>
+                                    @if (Model.LastLogin.HasValue)
+                                    {
+                                        @Model.LastLogin.Value.ToString("dd/MM/yyyy HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">אין נתונים</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-toggle-on text-success"></i> סטטוס:
+                                </th>
+                                <td>
+                                    @if (Model.IsActive)
+                                    {
+                                        <span class="badge bg-success">פעיל</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">לא פעיל</span>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2">
+                        <a asp-action="ChangePassword" class="btn btn-warning btn-lg">
+                            <i class="fas fa-key"></i> שינוי סיסמה
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> חזרה לדף הבית
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

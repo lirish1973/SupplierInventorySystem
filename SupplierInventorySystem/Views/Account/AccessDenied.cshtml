@@ -1,0 +1,31 @@
+﻿@{
+    ViewData["Title"] = "גישה נדחתה";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="card shadow border-danger">
+                <div class="card-body text-center p-5">
+                    <i class="fas fa-ban fa-5x text-danger mb-4"></i>
+                    <h1 class="display-4 text-danger">גישה נדחתה</h1>
+                    <p class="lead mt-3">
+                        אין לך הרשאות מספיקות לצפות בדף זה.
+                    </p>
+                    <hr class="my-4">
+                    <p class="text-muted">
+                        אם אתה סבור שזו טעות, פנה למנהל המערכת.
+                    </p>
+                    <div class="d-grid gap-2 mt-4">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">
+                            <i class="fas fa-home"></i> חזרה לדף הבית
+                        </a>
+                        <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-secondary">
+                            <i class="fas fa-user"></i> הפרופיל שלי
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
