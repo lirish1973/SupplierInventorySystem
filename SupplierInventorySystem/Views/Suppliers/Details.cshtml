@@ -1,0 +1,300 @@
+﻿@model SupplierInventorySystem.Models.Supplier
+
+@{
+    ViewData["Title"] = "פרטי ספק";
+}
+
+<div class="container-fluid" dir="rtl">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">
+                <i class="fas fa-building"></i> @Model.Name
+            </h1>
+            <p class="lead text-muted">
+                @if (!string.IsNullOrEmpty(Model.Code))
+                {
+                    <span class="badge bg-primary">@Model.Code</span>
+                }
+                @if (Model.Status == "active")
+                {
+                    <span class="badge bg-success">פעיל</span>
+                }
+                else if (Model.Status == "inactive")
+                {
+                    <span class="badge bg-secondary">לא פעיל</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger">חסום</span>
+                }
+            </p>
+        </div>
+        <div class="col-md-4 text-start">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="fas fa-edit"></i> עריכה
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> חזרה
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- פרטים כלליים -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-info-circle"></i> פרטים כלליים</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th width="40%">שם משפטי:</th>
+                                <td>@(Model.LegalName ?? "לא צוין")</td>
+                            </tr>
+                            <tr>
+                                <th>ח.פ / ע.מ:</th>
+                                <td>@(Model.TaxId ?? "לא צוין")</td>
+                            </tr>
+                            <tr>
+                                <th>מטבע ברירת מחדל:</th>
+                                <td>
+                                    <span class="badge bg-info fs-6">@Model.DefaultCurrency</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>תנאי תשלום:</th>
+                                <td>@(Model.DefaultPaymentTerms ?? "לא צוין")</td>
+                            </tr>
+                            <tr>
+                                <th>זמן אספקה:</th>
+                                <td>
+                                    @if (Model.LeadTimeDays.HasValue)
+                                    {
+                                        <span>@Model.LeadTimeDays ימים</span>
+                                    }
+                                    else
+                                    {
+                                        <span>לא צוין</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>דירוג:</th>
+                                <td>
+                                    @if (Model.Rating.HasValue)
+                                    {
+                                        <span class="text-warning fs-5">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= Model.Rating)
+                                                {
+                                                    <i class="fas fa-star"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="far fa-star"></i>
+                                                }
+                                            }
+                                        </span>
+                                        <span>(@Model.Rating / 5)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">לא דורג</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>תאריך יצירה:</th>
+                                <td>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                            <tr>
+                                <th>עדכון אחרון:</th>
+                                <td>@Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- אנשי קשר -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-users"></i> אנשי קשר</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.SupplierContacts != null && Model.SupplierContacts.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var contact in Model.SupplierContacts)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">
+                                            <i class="fas fa-user-circle"></i> @contact.Name
+                                        </h5>
+                                        <small class="text-muted">@contact.Role</small>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(contact.Phone))
+                                    {
+                                        <p class="mb-1">
+                                            <i class="fas fa-phone"></i> @contact.Phone
+                                        </p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(contact.Email))
+                                    {
+                                        <p class="mb-1">
+                                            <i class="fas fa-envelope"></i>
+                                            <a href="mailto:@contact.Email">@contact.Email</a>
+                                        </p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(contact.Notes))
+                                    {
+                                        <small class="text-muted">@contact.Notes</small>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> אין אנשי קשר רשומים
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- כתובות -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-map-marker-alt"></i> כתובות</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.SupplierAddresses != null && Model.SupplierAddresses.Any())
+                    {
+                        @foreach (var address in Model.SupplierAddresses)
+                        {
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    @if (address.IsPrimary)
+                                    {
+                                        <span class="badge bg-primary mb-2">כתובת ראשית</span>
+                                    }
+                                    <p class="mb-1">@address.AddressLine1</p>
+                                    @if (!string.IsNullOrEmpty(address.AddressLine2))
+                                    {
+                                        <p class="mb-1">@address.AddressLine2</p>
+                                    }
+                                    <p class="mb-1">
+                                        @address.City@(!string.IsNullOrEmpty(address.PostalCode) ? ", " + address.PostalCode : "")
+                                    </p>
+                                    @if (!string.IsNullOrEmpty(address.Country))
+                                    {
+                                        <p class="mb-0 text-muted">@address.Country</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> אין כתובות רשומות
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- מדדי ביצועים -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-chart-line"></i> מדדי ביצועים אחרונים</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.SupplierMetrics != null && Model.SupplierMetrics.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>תאריך</th>
+                                        <th>אספקה בזמן</th>
+                                        <th>שיעור פגמים</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var metric in Model.SupplierMetrics)
+                                    {
+                                        <tr>
+                                            <td>@metric.MetricDate.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @if (metric.OnTimePercentage.HasValue)
+                                                {
+                                                    <span class="badge @(metric.OnTimePercentage >= 90 ? "bg-success" : metric.OnTimePercentage >= 70 ? "bg-warning" : "bg-danger")">
+                                                        @metric.OnTimePercentage.Value.ToString("F1")%
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (metric.DefectRate.HasValue)
+                                                {
+                                                    <span class="badge @(metric.DefectRate <= 0.02m ? "bg-success" : metric.DefectRate <= 0.05m ? "bg-warning" : "bg-danger")">
+                                                        @metric.DefectRate.Value.ToString("P2")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> אין מדדי ביצועים רשומים
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- פעולות -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-lg">
+                        <i class="fas fa-edit"></i> ערוך ספק
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger btn-lg">
+                        <i class="fas fa-trash"></i> מחק ספק
+                    </a>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-list"></i> חזרה לרשימה
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

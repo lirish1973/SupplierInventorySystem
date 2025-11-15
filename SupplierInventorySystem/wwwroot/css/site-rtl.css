@@ -1,0 +1,86 @@
+﻿/* RTL Support for Hebrew */
+body {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Fix Bootstrap RTL */
+.form-control, .form-select {
+    text-align: right;
+}
+
+.input-group-text {
+    text-align: right;
+}
+
+/* Navbar RTL */
+.navbar-nav {
+    flex-direction: row;
+}
+
+.dropdown-menu {
+    text-align: right;
+}
+
+/* Tables RTL */
+.table {
+    text-align: right;
+}
+
+    .table thead th {
+        text-align: center;
+    }
+
+/* Buttons spacing */
+.btn-group {
+    direction: ltr;
+}
+
+/* Cards */
+.card {
+    text-align: right;
+}
+
+/* Alerts */
+.alert {
+    text-align: right;
+}
+
+/* Custom styles */
+.badge {
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+}
+
+.display-4, .display-5 {
+    font-weight: 600;
+}
+
+/* Smooth transitions */
+.btn, .card, .alert {
+    transition: all 0.3s ease;
+}
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+/* Loading spinner */
+.spinner-border {
+    margin: 20px auto;
+    display: block;
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+        .btn-group .btn {
+            margin-bottom: 5px;
+        }
+}

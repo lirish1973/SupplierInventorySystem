@@ -1,0 +1,146 @@
+﻿@model SupplierInventorySystem.Models.Supplier
+
+@{
+    ViewData["Title"] = "עריכת ספק";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h2 class="mb-0">
+                        <i class="fas fa-edit"></i> עריכת ספק: @Model.Name
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="CreatedAt" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="row">
+                            <!-- עמודה ימנית -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Code" class="form-label fw-bold"></label>
+                                    <input asp-for="Code" class="form-control" />
+                                    <span asp-validation-for="Code" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Name" class="form-label fw-bold">
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="Name" class="form-control" required />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="LegalName" class="form-label fw-bold"></label>
+                                    <input asp-for="LegalName" class="form-control" />
+                                    <span asp-validation-for="LegalName" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="TaxId" class="form-label fw-bold"></label>
+                                    <input asp-for="TaxId" class="form-control" />
+                                    <span asp-validation-for="TaxId" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="DefaultCurrency" class="form-label fw-bold"></label>
+                                    <select asp-for="DefaultCurrency" class="form-select">
+                                        <option value="ILS">₪ שקל ישראלי (ILS)</option>
+                                        <option value="USD">$ דולר אמריקאי (USD)</option>
+                                        <option value="EUR">€ יורו (EUR)</option>
+                                        <option value="GBP">£ פאונד בריטי (GBP)</option>
+                                    </select>
+                                    <span asp-validation-for="DefaultCurrency" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <!-- עמודה שמאלית -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="DefaultPaymentTerms" class="form-label fw-bold"></label>
+                                    <select asp-for="DefaultPaymentTerms" class="form-select">
+                                        <option value="">-- בחר תנאי תשלום --</option>
+                                        <option value="מזומן">מזומן</option>
+                                        <option value="שוטף+30">שוטף+30</option>
+                                        <option value="שוטף+45">שוטף+45</option>
+                                        <option value="שוטף+60">שוטף+60</option>
+                                        <option value="שוטף+90">שוטף+90</option>
+                                    </select>
+                                    <span asp-validation-for="DefaultPaymentTerms" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="LeadTimeDays" class="form-label fw-bold"></label>
+                                    <div class="input-group">
+                                        <input asp-for="LeadTimeDays" class="form-control" type="number" min="0" />
+                                        <span class="input-group-text">ימים</span>
+                                    </div>
+                                    <span asp-validation-for="LeadTimeDays" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Rating" class="form-label fw-bold"></label>
+                                    <select asp-for="Rating" class="form-select">
+                                        <option value="">-- ללא דירוג --</option>
+                                        <option value="1">⭐ 1 - גרוע</option>
+                                        <option value="2">⭐⭐ 2 - לא טוב</option>
+                                        <option value="3">⭐⭐⭐ 3 - בסדר</option>
+                                        <option value="4">⭐⭐⭐⭐ 4 - טוב</option>
+                                        <option value="5">⭐⭐⭐⭐⭐ 5 - מצוין</option>
+                                    </select>
+                                    <span asp-validation-for="Rating" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Status" class="form-label fw-bold"></label>
+                                    <select asp-for="Status" class="form-select">
+                                        <option value="active">✅ פעיל</option>
+                                        <option value="inactive">⏸️ לא פעיל</option>
+                                        <option value="blocked">🚫 חסום</option>
+                                    </select>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <small>
+                                <strong>תאריך יצירה:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm") |
+                                <strong>עדכון אחרון:</strong> @Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </small>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="submit" class="btn btn-warning btn-lg">
+                                    <i class="fas fa-save"></i> שמור שינויים
+                                </button>
+                                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info btn-lg">
+                                    <i class="fas fa-eye"></i> צפה בפרטים
+                                </a>
+                                <a asp-action="Index" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-arrow-right"></i> חזרה לרשימה
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

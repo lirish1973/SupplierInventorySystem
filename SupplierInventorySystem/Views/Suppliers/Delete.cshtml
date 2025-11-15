@@ -1,0 +1,97 @@
+﻿@model SupplierInventorySystem.Models.Supplier
+
+@{
+    ViewData["Title"] = "מחיקת ספק";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> אישור מחיקת ספק
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-exclamation-circle"></i> אזהרה!
+                        </h4>
+                        <p class="mb-0">
+                            האם אתה בטוח שברצונך למחוק את הספק הזה? <strong>פעולה זו אינה ניתנת לביטול!</strong>
+                        </p>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body bg-light">
+                            <h3 class="mb-3">פרטי הספק למחיקה:</h3>
+                            <dl class="row">
+                                <dt class="col-sm-4">קוד ספק:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-primary fs-5">@(Model.Code ?? "לא צוין")</span>
+                                </dd>
+
+                                <dt class="col-sm-4">שם ספק:</dt>
+                                <dd class="col-sm-8"><strong class="fs-4">@Model.Name</strong></dd>
+
+                                <dt class="col-sm-4">שם משפטי:</dt>
+                                <dd class="col-sm-8">@(Model.LegalName ?? "לא צוין")</dd>
+
+                                <dt class="col-sm-4">ח.פ / ע.מ:</dt>
+                                <dd class="col-sm-8">@(Model.TaxId ?? "לא צוין")</dd>
+
+                                <dt class="col-sm-4">סטטוס:</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.Status == "active")
+                                    {
+                                        <span class="badge bg-success">פעיל</span>
+                                    }
+                                    else if (Model.Status == "inactive")
+                                    {
+                                        <span class="badge bg-secondary">לא פעיל</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">חסום</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-4">תאריך יצירה:</dt>
+                                <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong><i class="fas fa-info-circle"></i> שים לב:</strong>
+                        מחיקת הספק תמחק גם את כל הנתונים הקשורים אליו:
+                        <ul class="mb-0 mt-2">
+                            <li>אנשי קשר</li>
+                            <li>כתובות</li>
+                            <li>מדדי ביצועים</li>
+                            <li>קשרים למוצרים</li>
+                        </ul>
+                    </div>
+
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="fas fa-trash-alt"></i> כן, מחק את הספק
+                                </button>
+                                <a asp-action="Index" class="btn btn-success btn-lg">
+                                    <i class="fas fa-times"></i> לא, בטל
+                                </a>
+                            </div>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
+                                <i class="fas fa-eye"></i> צפה בפרטים
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
