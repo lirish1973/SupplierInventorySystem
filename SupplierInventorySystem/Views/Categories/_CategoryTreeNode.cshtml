@@ -1,0 +1,28 @@
+@model SupplierInventorySystem.ViewModels.CategoryTreeViewModel
+
+<ul>
+    <li>
+        <span class="category-item">
+            <i class="fas @(Model.Children.Any() ? "fa-folder-open text-warning" : "fa-folder text-info")"></i>
+            <strong>@Model.Name</strong>
+            @if (Model.ProductCount > 0)
+            {
+                <a asp-controller="Products" asp-action="Index" asp-route-categoryId="@Model.Id"
+                   class="badge bg-success text-decoration-none">
+                    @Model.ProductCount מוצרים
+                </a>
+            }
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-warning">
+                <i class="fas fa-edit"></i>
+            </a>
+        </span>
+
+        @if (Model.Children.Any())
+        {
+            foreach (var child in Model.Children)
+            {
+                @await Html.PartialAsync("_CategoryTreeNode", child)
+            }
+        }
+    </li>
+</ul>

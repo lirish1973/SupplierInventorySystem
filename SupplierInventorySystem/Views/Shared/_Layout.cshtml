@@ -50,6 +50,12 @@
                                 <i class="fas fa-file-invoice"></i> הזמנות רכש
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Categories" ? "active" : "")"
+                               asp-controller="Categories" asp-action="Index">
+                                <i class="fas fa-layer-group"></i> קטגוריות
+                            </a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-chart-bar"></i> דוחות

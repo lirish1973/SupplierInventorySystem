@@ -1,0 +1,56 @@
+@model SupplierInventorySystem.ViewModels.CategoryFormViewModel
+@{
+    ViewData["Title"] = "קטגוריה חדשה";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus"></i> יצירת קטגוריה חדשה</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
+                                <input asp-for="Name" class="form-control" placeholder="שם הקטגוריה" />
+                            </div>
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ParentId" class="form-label"></label>
+                            <select asp-for="ParentId" asp-items="ViewBag.ParentId" class="form-select">
+                                <option value="">-- קטגוריה ראשית (ללא אב) --</option>
+                            </select>
+                            <small class="form-text text-muted">
+                                השאר ריק ליצירת קטגוריה ראשית, או בחר קטגוריית אב ליצירת תת-קטגוריה
+                            </small>
+                            <span asp-validation-for="ParentId" class="text-danger"></span>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> חזרה לרשימה
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> צור קטגוריה
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

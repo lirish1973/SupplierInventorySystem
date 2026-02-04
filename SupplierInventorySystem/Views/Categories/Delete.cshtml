@@ -1,0 +1,88 @@
+@model SupplierInventorySystem.ViewModels.CategoryListViewModel
+@{
+    ViewData["Title"] = "מחיקת קטגוריה";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle"></i> אישור מחיקה</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.ProductCount > 0 || Model.SubCategoryCount > 0)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="fas fa-ban"></i>
+                            <strong>לא ניתן למחוק!</strong>
+                            <ul class="mb-0 mt-2">
+                                @if (Model.ProductCount > 0)
+                                {
+                                    <li>יש @Model.ProductCount מוצרים משויכים לקטגוריה זו</li>
+                                }
+                                @if (Model.SubCategoryCount > 0)
+                                {
+                                    <li>יש @Model.SubCategoryCount תתי-קטגוריות</li>
+                                }
+                            </ul>
+                            <p class="mt-2 mb-0">יש להעביר או למחוק את התוכן לפני מחיקת הקטגוריה.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <strong>שים לב!</strong> פעולה זו אינה ניתנת לביטול.
+                        </div>
+                    }
+
+                    <p class="lead">האם אתה בטוח שברצונך למחוק את הקטגוריה הזו?</p>
+
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">שם קטגוריה</dt>
+                                <dd class="col-sm-8 fw-bold">
+                                    <i class="fas fa-layer-group text-warning"></i> @Model.Name
+                                </dd>
+
+                                <dt class="col-sm-4">קטגוריית אב</dt>
+                                <dd class="col-sm-8">@(Model.ParentName ?? "ראשית")</dd>
+
+                                <dt class="col-sm-4">מוצרים</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge @(Model.ProductCount > 0 ? "bg-warning" : "bg-success")">
+                                        @Model.ProductCount
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-4">תת-קטגוריות</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge @(Model.SubCategoryCount > 0 ? "bg-warning" : "bg-success")">
+                                        @Model.SubCategoryCount
+                                    </span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> ביטול
+                            </a>
+                            @if (Model.ProductCount == 0 && Model.SubCategoryCount == 0)
+                            {
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> אישור מחיקה
+                                </button>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
