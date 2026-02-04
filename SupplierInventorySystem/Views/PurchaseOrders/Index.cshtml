@@ -1,0 +1,199 @@
+@model IEnumerable<SupplierInventorySystem.ViewModels.PurchaseOrderListViewModel>
+@using SupplierInventorySystem.Models
+@{
+    ViewData["Title"] = "הזמנות רכש";
+    var currentFilter = ViewData["CurrentFilter"] as string ?? string.Empty;
+    var currentSupplier = ViewData["CurrentSupplier"] as int?;
+    var currentStatus = ViewData["CurrentStatus"] as string ?? string.Empty;
+    var fromDate = ViewData["FromDate"] as string ?? string.Empty;
+    var toDate = ViewData["ToDate"] as string ?? string.Empty;
+}
+
+<div class="container-fluid" dir="rtl">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-invoice"></i> הזמנות רכש</h2>
+        <a asp-action="Create" class="btn btn-success">
+            <i class="fas fa-plus"></i> הזמנה חדשה
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-filter"></i> סינון וחיפוש
+        </div>
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">חיפוש</label>
+                    <input type="text" name="searchString" value="@currentFilter"
+                           class="form-control" placeholder="מספר הזמנה / ספק" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">ספק</label>
+                    <select name="supplierId" class="form-select" asp-items="ViewBag.Suppliers">
+                        <option value="">-- כל הספקים --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">סטטוס</label>
+                    <select name="status" class="form-select" asp-items="ViewBag.Statuses">
+                        <option value="">-- כל הסטטוסים --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">מתאריך</label>
+                    <input type="date" name="fromDate" value="@fromDate" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">עד תאריך</label>
+                    <input type="date" name="toDate" value="@toDate" class="form-control" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> סנן
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card shadow">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between">
+            <span><i class="fas fa-list"></i> רשימת הזמנות (@Model.Count())</span>
+            <span>
+                סה"כ: ₪@Model.Sum(o => o.Currency == "ILS" ? o.TotalAmount : 0).ToString("N2")
+            </span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>מספר הזמנה</th>
+                            <th>ספק</th>
+                            <th>תאריך הזמנה</th>
+                            <th>אספקה צפויה</th>
+                            <th class="text-center">סטטוס</th>
+                            <th class="text-center">פריטים</th>
+                            <th class="text-left">סה"כ</th>
+                            <th class="text-center">פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            @foreach (var order in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="Details" asp-route-id="@order.Id" class="fw-bold text-primary">
+                                            @order.OrderNumber
+                                        </a>
+                                    </td>
+                                    <td>@order.SupplierName</td>
+                                    <td>@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (order.ExpectedDeliveryDate.HasValue)
+                                        {
+                                            var isOverdue = order.ExpectedDeliveryDate.Value < DateTime.Now &&
+                                                           order.Status != PurchaseOrderStatus.Received &&
+                                                           order.Status != PurchaseOrderStatus.Cancelled;
+                                            <span class="@(isOverdue ? "text-danger fw-bold" : "")">
+                                                @order.ExpectedDeliveryDate.Value.ToString("dd/MM/yyyy")
+                                                @if (isOverdue)
+                                                {
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                }
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @PurchaseOrderStatus.GetStatusBadgeClass(order.Status)">
+                                            @PurchaseOrderStatus.GetDisplayName(order.Status)
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark">@order.ItemCount</span>
+                                    </td>
+                                    <td class="text-left fw-bold">
+                                        @switch (order.Currency)
+                                        {
+                                            case "ILS":
+                                                <text>₪</text>
+                                                break;
+                                            case "USD":
+                                                <text>$</text>
+                                                break;
+                                            case "EUR":
+                                                <text>€</text>
+                                                break;
+                                        }
+                                        @order.TotalAmount.ToString("N2")
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-action="Details" asp-route-id="@order.Id"
+                                               class="btn btn-info" title="פרטים">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            @if (order.Status == PurchaseOrderStatus.Draft)
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@order.Id"
+                                                   class="btn btn-warning" title="עריכה">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            }
+                                            @if (order.Status == PurchaseOrderStatus.Confirmed ||
+                                                 order.Status == PurchaseOrderStatus.Shipped ||
+                                                 order.Status == PurchaseOrderStatus.PartiallyReceived)
+                                            {
+                                                <a asp-action="Receive" asp-route-id="@order.Id"
+                                                   class="btn btn-success" title="קבלת סחורה">
+                                                    <i class="fas fa-truck-loading"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <i class="fas fa-file-invoice fa-3x mb-3 d-block"></i>
+                                    <h5>לא נמצאו הזמנות</h5>
+                                    <a asp-action="Create" class="btn btn-success mt-2">
+                                        <i class="fas fa-plus"></i> צור הזמנה חדשה
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

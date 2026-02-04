@@ -1,0 +1,87 @@
+@model SupplierInventorySystem.ViewModels.PurchaseOrderFormViewModel
+@{
+    ViewData["Title"] = "הזמנה חדשה";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus"></i> יצירת הזמנת רכש חדשה</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SupplierId" class="form-label"></label>
+                                <select asp-for="SupplierId" asp-items="ViewBag.SupplierId" class="form-select">
+                                    <option value="">-- בחר ספק --</option>
+                                </select>
+                                <span asp-validation-for="SupplierId" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="OrderDate" class="form-label"></label>
+                                <input asp-for="OrderDate" class="form-control" type="date" />
+                                <span asp-validation-for="OrderDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ExpectedDeliveryDate" class="form-label"></label>
+                                <input asp-for="ExpectedDeliveryDate" class="form-control" type="date" />
+                                <span asp-validation-for="ExpectedDeliveryDate" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Currency" class="form-label"></label>
+                                <select asp-for="Currency" asp-items="ViewBag.Currencies" class="form-select"></select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PaymentTerms" class="form-label"></label>
+                            <input asp-for="PaymentTerms" class="form-control" placeholder="לדוגמה: שוטף + 30" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label"></label>
+                            <textarea asp-for="Notes" class="form-control" rows="2"
+                                      placeholder="הערות שיופיעו בהזמנה לספק..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="InternalNotes" class="form-label"></label>
+                            <textarea asp-for="InternalNotes" class="form-control" rows="2"
+                                      placeholder="הערות פנימיות (לא יוצגו לספק)..."></textarea>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            לאחר יצירת ההזמנה תוכל להוסיף פריטים ולשלוח לספק.
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> חזרה לרשימה
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> צור הזמנה
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,386 @@
+@model SupplierInventorySystem.ViewModels.PurchaseOrderFormViewModel
+@{
+    ViewData["Title"] = $"עריכת הזמנה {Model.OrderNumber}";
+}
+
+<div class="container-fluid" dir="rtl">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Order Details Form -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fas fa-edit"></i> פרטי הזמנה: @Model.OrderNumber</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="OrderNumber" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="SupplierId" class="form-label"></label>
+                            <select asp-for="SupplierId" asp-items="ViewBag.SupplierId" class="form-select">
+                                <option value="">-- בחר ספק --</option>
+                            </select>
+                            <span asp-validation-for="SupplierId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="OrderDate" class="form-label"></label>
+                            <input asp-for="OrderDate" class="form-control" type="date" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ExpectedDeliveryDate" class="form-label"></label>
+                            <input asp-for="ExpectedDeliveryDate" class="form-control" type="date" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Currency" class="form-label"></label>
+                            <select asp-for="Currency" asp-items="ViewBag.Currencies" class="form-select"></select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PaymentTerms" class="form-label"></label>
+                            <input asp-for="PaymentTerms" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ShippingCost" class="form-label"></label>
+                            <input asp-for="ShippingCost" class="form-control" type="number" step="0.01" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label"></label>
+                            <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="InternalNotes" class="form-label"></label>
+                            <textarea asp-for="InternalNotes" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="fas fa-save"></i> שמור שינויים
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-calculator"></i> סיכום הזמנה</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td>סכום ביניים:</td>
+                            <td class="text-left fw-bold" id="subtotal">₪@Model.Subtotal.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td>מע"מ (17%):</td>
+                            <td class="text-left" id="tax">₪@Model.TaxAmount.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <td>משלוח:</td>
+                            <td class="text-left" id="shipping">₪@Model.ShippingCost.ToString("N2")</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td class="fw-bold">סה"כ:</td>
+                            <td class="text-left fw-bold fs-5" id="total">₪@Model.TotalAmount.ToString("N2")</td>
+                        </tr>
+                    </table>
+
+                    <hr />
+
+                    <div class="d-grid gap-2">
+                        @if (Model.Items.Any())
+                        {
+                            <form asp-action="Send" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success w-100"
+                                        onclick="return confirm('האם לשלוח את ההזמנה לספק?')">
+                                    <i class="fas fa-paper-plane"></i> שלח הזמנה לספק
+                                </button>
+                            </form>
+                        }
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
+                            <i class="fas fa-eye"></i> צפייה בהזמנה
+                        </a>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> חזרה לרשימה
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> פריטי הזמנה</h5>
+                    <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                        <i class="fas fa-plus"></i> הוסף פריט
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>מק"ט</th>
+                                    <th>שם מוצר</th>
+                                    <th class="text-center">כמות</th>
+                                    <th>יחידה</th>
+                                    <th class="text-left">מחיר</th>
+                                    <th class="text-center">הנחה %</th>
+                                    <th class="text-left">סה"כ</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsTable">
+                                @if (Model.Items.Any())
+                                {
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <tr data-item-id="@item.Id">
+                                            <td><span class="badge bg-primary">@item.ProductSku</span></td>
+                                            <td>@item.ProductName</td>
+                                            <td class="text-center">@item.Quantity.ToString("N2")</td>
+                                            <td>@item.UnitCode</td>
+                                            <td class="text-left">₪@item.UnitPrice.ToString("N2")</td>
+                                            <td class="text-center">
+                                                @if (item.DiscountPercent > 0)
+                                                {
+                                                    <span class="badge bg-success">@item.DiscountPercent%</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td class="text-left fw-bold">₪@item.LineTotal.ToString("N2")</td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-danger"
+                                                        onclick="removeItem(@item.Id)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr id="noItemsRow">
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="fas fa-box-open fa-2x mb-2 d-block"></i>
+                                            אין פריטים בהזמנה. לחץ על "הוסף פריט" להוספת מוצרים.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> הוספת פריט להזמנה</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm">
+                    <input type="hidden" name="orderId" value="@Model.Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label">חיפוש מוצר</label>
+                        <input type="text" id="productSearch" class="form-control"
+                               placeholder="הקלד שם מוצר או מק&quot;ט..." autocomplete="off" />
+                        <div id="productResults" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                        <input type="hidden" id="selectedProductId" name="productId" />
+                    </div>
+
+                    <div id="selectedProduct" style="display: none;" class="alert alert-info">
+                        <strong id="selectedProductName"></strong>
+                        <br><small id="selectedProductSku"></small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">כמות</label>
+                            <input type="number" name="quantity" class="form-control" value="1" min="0.01" step="0.01" />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">מחיר יחידה</label>
+                            <input type="number" name="unitPrice" class="form-control" value="0" min="0" step="0.01" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">הנחה %</label>
+                        <input type="number" name="discountPercent" class="form-control" value="0" min="0" max="100" step="0.01" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">הערות</label>
+                        <input type="text" name="notes" class="form-control" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ביטול</button>
+                <button type="button" class="btn btn-primary" onclick="addItem()">
+                    <i class="fas fa-plus"></i> הוסף פריט
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        // Product search
+        let searchTimeout;
+        const supplierId = @Model.SupplierId;
+
+        document.getElementById('productSearch').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const term = this.value;
+
+            if (term.length < 2) {
+                document.getElementById('productResults').innerHTML = '';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetch(`/PurchaseOrders/GetSupplierProducts?supplierId=${supplierId}&term=${encodeURIComponent(term)}`)
+                    .then(response => response.json())
+                    .then(products => {
+                        const resultsDiv = document.getElementById('productResults');
+                        if (products.length === 0) {
+                            // Try general search
+                            fetch(`/PurchaseOrders/SearchProducts?term=${encodeURIComponent(term)}`)
+                                .then(r => r.json())
+                                .then(allProducts => {
+                                    displayProducts(allProducts, false);
+                                });
+                        } else {
+                            displayProducts(products, true);
+                        }
+                    });
+            }, 300);
+        });
+
+        function displayProducts(products, hasSupplierPrice) {
+            const resultsDiv = document.getElementById('productResults');
+            if (products.length === 0) {
+                resultsDiv.innerHTML = '<div class="list-group-item text-muted">לא נמצאו מוצרים</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = products.map(p => `
+                <button type="button" class="list-group-item list-group-item-action"
+                        onclick="selectProduct(${p.id}, '${p.name}', '${p.sku}', ${p.price || 0})">
+                    <strong>${p.name}</strong> <span class="badge bg-secondary">${p.sku}</span>
+                    ${p.price ? `<span class="float-start text-success">₪${p.price.toFixed(2)}</span>` : ''}
+                </button>
+            `).join('');
+        }
+
+        function selectProduct(id, name, sku, price) {
+            document.getElementById('selectedProductId').value = id;
+            document.getElementById('selectedProductName').textContent = name;
+            document.getElementById('selectedProductSku').textContent = sku;
+            document.getElementById('selectedProduct').style.display = 'block';
+            document.getElementById('productSearch').value = name;
+            document.getElementById('productResults').innerHTML = '';
+
+            if (price > 0) {
+                document.querySelector('input[name="unitPrice"]').value = price;
+            }
+        }
+
+        function addItem() {
+            const form = document.getElementById('addItemForm');
+            const formData = new FormData(form);
+
+            if (!formData.get('productId')) {
+                alert('יש לבחור מוצר');
+                return;
+            }
+
+            fetch('/PurchaseOrders/AddItem', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            });
+        }
+
+        function removeItem(itemId) {
+            if (!confirm('האם למחוק את הפריט?')) return;
+
+            const formData = new FormData();
+            formData.append('itemId', itemId);
+
+            fetch('/PurchaseOrders/RemoveItem', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            });
+        }
+
+        // Close product results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#productSearch') && !e.target.closest('#productResults')) {
+                document.getElementById('productResults').innerHTML = '';
+            }
+        });
+    </script>
+}

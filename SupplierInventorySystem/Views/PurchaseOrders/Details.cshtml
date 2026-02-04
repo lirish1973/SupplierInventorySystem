@@ -1,0 +1,314 @@
+@model SupplierInventorySystem.ViewModels.PurchaseOrderDetailsViewModel
+@using SupplierInventorySystem.Models
+@{
+    ViewData["Title"] = $"הזמנה {Model.OrderNumber}";
+}
+
+<div class="container-fluid" dir="rtl">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-file-invoice"></i> הזמנה @Model.OrderNumber
+                <span class="badge @Model.StatusBadgeClass fs-6">@Model.StatusDisplayName</span>
+            </h2>
+        </div>
+        <div class="btn-group">
+            @if (Model.CanEdit)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> עריכה
+                </a>
+            }
+            @if (Model.CanSend)
+            {
+                <form asp-action="Send" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success" onclick="return confirm('האם לשלוח את ההזמנה לספק?')">
+                        <i class="fas fa-paper-plane"></i> שלח לספק
+                    </button>
+                </form>
+            }
+            @if (Model.CanConfirm)
+            {
+                <form asp-action="Confirm" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> אישור ספק
+                    </button>
+                </form>
+            }
+            @if (Model.CanReceive)
+            {
+                <a asp-action="Receive" asp-route-id="@Model.Id" class="btn btn-success">
+                    <i class="fas fa-truck-loading"></i> קבלת סחורה
+                </a>
+            }
+            @if (Model.CanCancel)
+            {
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                    <i class="fas fa-times"></i> ביטול
+                </button>
+            }
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> חזרה
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Order Info -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> פרטי הזמנה</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">מספר הזמנה</dt>
+                        <dd class="col-sm-7 fw-bold">@Model.OrderNumber</dd>
+
+                        <dt class="col-sm-5">ספק</dt>
+                        <dd class="col-sm-7">
+                            @if (Model.Supplier != null)
+                            {
+                                <a asp-controller="Suppliers" asp-action="Details" asp-route-id="@Model.Supplier.Id">
+                                    @Model.Supplier.Name
+                                </a>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-5">תאריך הזמנה</dt>
+                        <dd class="col-sm-7">@Model.OrderDate.ToString("dd/MM/yyyy")</dd>
+
+                        <dt class="col-sm-5">אספקה צפויה</dt>
+                        <dd class="col-sm-7">
+                            @if (Model.ExpectedDeliveryDate.HasValue)
+                            {
+                                var isOverdue = Model.ExpectedDeliveryDate.Value < DateTime.Now &&
+                                               Model.Status != PurchaseOrderStatus.Received &&
+                                               Model.Status != PurchaseOrderStatus.Cancelled;
+                                <span class="@(isOverdue ? "text-danger fw-bold" : "")">
+                                    @Model.ExpectedDeliveryDate.Value.ToString("dd/MM/yyyy")
+                                    @if (isOverdue)
+                                    {
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    }
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </dd>
+
+                        @if (Model.ActualDeliveryDate.HasValue)
+                        {
+                            <dt class="col-sm-5">התקבל בתאריך</dt>
+                            <dd class="col-sm-7 text-success">@Model.ActualDeliveryDate.Value.ToString("dd/MM/yyyy")</dd>
+                        }
+
+                        <dt class="col-sm-5">תנאי תשלום</dt>
+                        <dd class="col-sm-7">@(Model.PaymentTerms ?? "-")</dd>
+
+                        <dt class="col-sm-5">מטבע</dt>
+                        <dd class="col-sm-7">@Model.Currency</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calculator"></i> סיכום כספי</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td>סכום ביניים:</td>
+                            <td class="text-left">₪@Model.Subtotal.ToString("N2")</td>
+                        </tr>
+                        @if (Model.DiscountAmount > 0)
+                        {
+                            <tr class="text-success">
+                                <td>הנחה:</td>
+                                <td class="text-left">-₪@Model.DiscountAmount.ToString("N2")</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td>מע"מ (17%):</td>
+                            <td class="text-left">₪@Model.TaxAmount.ToString("N2")</td>
+                        </tr>
+                        @if (Model.ShippingCost > 0)
+                        {
+                            <tr>
+                                <td>משלוח:</td>
+                                <td class="text-left">₪@Model.ShippingCost.ToString("N2")</td>
+                            </tr>
+                        }
+                        <tr class="table-success fw-bold fs-5">
+                            <td>סה"כ לתשלום:</td>
+                            <td class="text-left">₪@Model.TotalAmount.ToString("N2")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes & Meta -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-sticky-note"></i> הערות ומידע נוסף</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <div class="mb-3">
+                            <strong>הערות לספק:</strong>
+                            <p class="mb-0 text-muted">@Model.Notes</p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.InternalNotes))
+                    {
+                        <div class="mb-3">
+                            <strong>הערות פנימיות:</strong>
+                            <p class="mb-0 text-muted" style="white-space: pre-line;">@Model.InternalNotes</p>
+                        </div>
+                    }
+                    <hr />
+                    <small class="text-muted">
+                        <i class="fas fa-user"></i> נוצר על ידי: @(Model.CreatedBy?.FullName ?? Model.CreatedBy?.Username ?? "לא ידוע")
+                        <br />
+                        <i class="fas fa-calendar"></i> נוצר: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        <br />
+                        <i class="fas fa-edit"></i> עודכן: @Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-list"></i> פריטי הזמנה (@Model.Items.Count פריטים)</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>מק"ט</th>
+                            <th>שם מוצר</th>
+                            <th class="text-center">כמות</th>
+                            <th>יחידה</th>
+                            <th class="text-left">מחיר יחידה</th>
+                            <th class="text-center">הנחה</th>
+                            <th class="text-left">סה"כ שורה</th>
+                            @if (Model.Status == PurchaseOrderStatus.PartiallyReceived || Model.Status == PurchaseOrderStatus.Received)
+                            {
+                                <th class="text-center">התקבל</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int rowNum = 1; }
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@rowNum</td>
+                                <td><span class="badge bg-primary">@item.Product?.Sku</span></td>
+                                <td>
+                                    @item.Product?.Name
+                                    @if (!string.IsNullOrEmpty(item.Notes))
+                                    {
+                                        <br /><small class="text-muted">@item.Notes</small>
+                                    }
+                                </td>
+                                <td class="text-center">@item.Quantity.ToString("N2")</td>
+                                <td>@item.Unit?.Code</td>
+                                <td class="text-left">₪@item.UnitPrice.ToString("N2")</td>
+                                <td class="text-center">
+                                    @if (item.DiscountPercent > 0)
+                                    {
+                                        <span class="badge bg-success">@item.DiscountPercent%</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-left fw-bold">₪@item.LineTotal.ToString("N2")</td>
+                                @if (Model.Status == PurchaseOrderStatus.PartiallyReceived || Model.Status == PurchaseOrderStatus.Received)
+                                {
+                                    <td class="text-center">
+                                        @if (item.IsFullyReceived)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> @item.QuantityReceived.ToString("N2")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                @item.QuantityReceived.ToString("N2") / @item.Quantity.ToString("N2")
+                                            </span>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            rowNum++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-times"></i> ביטול הזמנה</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <p>האם אתה בטוח שברצונך לבטל את ההזמנה <strong>@Model.OrderNumber</strong>?</p>
+                    <div class="mb-3">
+                        <label class="form-label">סיבת הביטול</label>
+                        <textarea name="reason" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">חזור</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times"></i> בטל הזמנה
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

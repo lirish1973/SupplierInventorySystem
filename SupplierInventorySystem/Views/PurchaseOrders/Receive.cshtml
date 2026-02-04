@@ -1,0 +1,127 @@
+@model SupplierInventorySystem.ViewModels.ReceiveGoodsViewModel
+@{
+    ViewData["Title"] = $"קבלת סחורה - {Model.OrderNumber}";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-truck-loading"></i> קבלת סחורה - הזמנה @Model.OrderNumber
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>ספק:</strong> @Model.SupplierName
+                        <br />
+                        הזן את הכמויות שהתקבלו עבור כל פריט. ניתן לקבל חלקית.
+                    </div>
+
+                    <form asp-action="Receive" method="post">
+                        <input type="hidden" asp-for="PurchaseOrderId" />
+                        <input type="hidden" asp-for="OrderNumber" />
+                        <input type="hidden" asp-for="SupplierName" />
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label asp-for="ReceiveDate" class="form-label"></label>
+                                <input asp-for="ReceiveDate" class="form-control" type="date" />
+                            </div>
+                            <div class="col-md-8">
+                                <label asp-for="Notes" class="form-label"></label>
+                                <input asp-for="Notes" class="form-control" placeholder="הערות לקבלה..." />
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>מק"ט</th>
+                                        <th>שם מוצר</th>
+                                        <th>יחידה</th>
+                                        <th class="text-center">הוזמן</th>
+                                        <th class="text-center">התקבל קודם</th>
+                                        <th class="text-center">נותר לקבל</th>
+                                        <th class="text-center" style="width: 150px;">כמות לקבלה</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.Items.Count; i++)
+                                    {
+                                        var item = Model.Items[i];
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary">@item.ProductSku</span>
+                                                <input type="hidden" name="Items[@i].ItemId" value="@item.ItemId" />
+                                                <input type="hidden" name="Items[@i].ProductName" value="@item.ProductName" />
+                                                <input type="hidden" name="Items[@i].ProductSku" value="@item.ProductSku" />
+                                                <input type="hidden" name="Items[@i].UnitCode" value="@item.UnitCode" />
+                                                <input type="hidden" name="Items[@i].OrderedQuantity" value="@item.OrderedQuantity" />
+                                                <input type="hidden" name="Items[@i].PreviouslyReceived" value="@item.PreviouslyReceived" />
+                                                <input type="hidden" name="Items[@i].RemainingQuantity" value="@item.RemainingQuantity" />
+                                            </td>
+                                            <td>@item.ProductName</td>
+                                            <td>@item.UnitCode</td>
+                                            <td class="text-center">@item.OrderedQuantity.ToString("N2")</td>
+                                            <td class="text-center">
+                                                @if (item.PreviouslyReceived > 0)
+                                                {
+                                                    <span class="text-success">@item.PreviouslyReceived.ToString("N2")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">0</span>
+                                                }
+                                            </td>
+                                            <td class="text-center fw-bold">@item.RemainingQuantity.ToString("N2")</td>
+                                            <td>
+                                                <input type="number"
+                                                       name="Items[@i].QuantityToReceive"
+                                                       class="form-control text-center"
+                                                       value="@item.RemainingQuantity"
+                                                       min="0"
+                                                       max="@item.RemainingQuantity"
+                                                       step="0.01" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Details" asp-route-id="@Model.PurchaseOrderId" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> חזרה להזמנה
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary" onclick="fillAllRemaining()">
+                                    <i class="fas fa-check-double"></i> קבל הכל
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> שמור קבלה
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function fillAllRemaining() {
+            document.querySelectorAll('input[name$=".QuantityToReceive"]').forEach(input => {
+                const max = parseFloat(input.getAttribute('max'));
+                input.value = max;
+            });
+        }
+    </script>
+}

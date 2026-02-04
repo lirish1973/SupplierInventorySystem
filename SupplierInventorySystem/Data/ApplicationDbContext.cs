@@ -25,6 +25,8 @@ namespace SupplierInventorySystem.Data
         public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<SupplierProduct> SupplierProducts { get; set; }
         public DbSet<ProductPriceHistory> ProductPriceHistories { get; set; }
+        public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+        public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
