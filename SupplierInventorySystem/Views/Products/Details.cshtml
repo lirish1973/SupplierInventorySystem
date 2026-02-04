@@ -1,0 +1,149 @@
+﻿@model SupplierInventorySystem.Models.Product
+@using System
+@using System.Globalization
+@{
+    ViewData["Title"] = "פרטי מוצר";
+    var currencyCulture = CultureInfo.CurrentCulture; // אפשר לשנות ל-"he-IL" אם רוצים פורמט ישראלי: CultureInfo.GetCultureInfo("he-IL")
+}
+
+<h2>פרטי מוצר</h2>
+
+<div>
+    <h4>@Model?.Name @(@Model != null ? "(" + Model.Sku + ")" : "")</h4>
+    <dl class="row">
+        <dt class="col-sm-3">קטגוריה</dt>
+        <dd class="col-sm-9">@Model?.Category?.Name</dd>
+
+        <dt class="col-sm-3">מק"ט</dt>
+        <dd class="col-sm-9">@Model?.Sku</dd>
+
+        <dt class="col-sm-3">יחידת ברירת מחדל</dt>
+        <dd class="col-sm-9">@Model?.DefaultUnit?.Code</dd>
+
+        <dt class="col-sm-3">תיאור</dt>
+        <dd class="col-sm-9">@Model?.Description</dd>
+
+        <dt class="col-sm-3">מוצר שירות</dt>
+        <dd class="col-sm-9">@(Model?.IsService == true ? "כן" : "לא")</dd>
+
+        <dt class="col-sm-3">עוקב סריאלים</dt>
+        <dd class="col-sm-9">@(Model?.TrackSerials == true ? "כן" : "לא")</dd>
+
+        <dt class="col-sm-3">עוקב לוטים</dt>
+        <dd class="col-sm-9">@(Model?.TrackLots == true ? "כן" : "לא")</dd>
+
+        <dt class="col-sm-3">נקודת הזמנה</dt>
+        <dd class="col-sm-9">
+            @{
+                string rp = "";
+                if (Model?.ReorderPoint != null)
+                {
+                    rp = Convert.ToDecimal(Model.ReorderPoint).ToString("0.####", CultureInfo.InvariantCulture);
+                }
+            }
+            @rp
+        </dd>
+
+        <dt class="col-sm-3">כמות הזמנה</dt>
+        <dd class="col-sm-9">
+            @{
+                string rq = "";
+                if (Model?.ReorderQty != null)
+                {
+                    rq = Convert.ToDecimal(Model.ReorderQty).ToString("0.####", CultureInfo.InvariantCulture);
+                }
+            }
+            @rq
+        </dd>
+
+        <dt class="col-sm-3">סטטוס</dt>
+        <dd class="col-sm-9">@((Model?.Active == true) ? "פעיל" : "לא פעיל")</dd>
+    </dl>
+</div>
+
+@if (Model?.SupplierProducts != null && Model.SupplierProducts.Any())
+{
+    <h4>ספקים שמספקים מוצר זה</h4>
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>ספק</th>
+                <th>מק"ט ספק</th>
+                <th class="text-right">מחיר</th>
+                <th class="text-right">זמני אספקה (ימים)</th>
+                <th class="text-right">כמות מינימום</th>
+                <th>מטבע</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sp in Model.SupplierProducts)
+            {
+                <tr>
+                    <td>@sp?.Supplier?.Name</td>
+                    <td>@sp?.SupplierSku</td>
+                    <td class="text-right">
+                        @{
+                            string priceText = "";
+                            if (sp?.Price != null)
+                            {
+                                // פורמט מטבע לפי התרבות הנוכחית (ניתן לשנות ל- he-IL)
+                                priceText = Convert.ToDecimal(sp.Price).ToString("C", currencyCulture);
+                            }
+                        }
+                        @priceText
+                    </td>
+                    <td class="text-right">@sp?.LeadTimeDays</td>
+                    <td class="text-right">
+                        @{
+                            string moqText = "";
+                            if (sp?.MinOrderQty != null)
+                            {
+                                moqText = Convert.ToDecimal(sp.MinOrderQty).ToString("0.####", CultureInfo.InvariantCulture);
+                            }
+                        }
+                        @moqText
+                    </td>
+                    <td>@sp?.Currency</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (Model?.PriceHistories != null && Model.PriceHistories.Any())
+{
+    <h4>היסטוריית מחירים (עד 10 אחרונים)</h4>
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>תאריך</th>
+                <th>ספק</th>
+                <th class="text-right">מחיר</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ph in Model.PriceHistories)
+            {
+                <tr>
+                    <td>@(ph?.EffectiveFrom?.ToString("yyyy-MM-dd") ?? "")</td>
+                    <td>@ph?.Supplier?.Name</td>
+                    <td class="text-right">
+                        @{
+                            string phPrice = "";
+                            if (ph?.Price != null)
+                            {
+                                phPrice = Convert.ToDecimal(ph.Price).ToString("C", currencyCulture);
+                            }
+                        }
+                        @phPrice
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">ערוך</a>
+    <a asp-action="Index" class="btn btn-secondary">חזור לרשימה</a>
+</div>

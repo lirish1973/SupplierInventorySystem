@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SupplierInventorySystem.Data;
 using SupplierInventorySystem.Models;
-
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SupplierInventorySystem.Controllers
 {
@@ -26,7 +28,11 @@ namespace SupplierInventorySystem.Controllers
             ViewData["CategorySortParm"] = sortOrder == "Category" ? "category_desc" : "Category";
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentCategory"] = categoryId;
-            ViewData["ActiveOnly"] = activeOnly ?? true;
+
+            // אם הפרמטר לא נשלח (null) נניח ברירת מחדל שמציגה את כל המוצרים (כולל לא פעילים).
+            // כלומר רק כאשר activeOnly==true - נציג רק מוצרים פעילים.
+            bool showActiveOnly = activeOnly == true;
+            ViewData["ActiveOnly"] = showActiveOnly;
 
             // טעינת קטגוריות לסינון
             ViewBag.Categories = new SelectList(
@@ -40,8 +46,8 @@ namespace SupplierInventorySystem.Controllers
                 .Include(p => p.DefaultUnit)
                 .AsQueryable();
 
-            // סינון לפי סטטוס (ברירת מחדל: רק פעילים)
-            if (activeOnly ?? true)
+            // סינון לפי סטטוס — רק כאשר המשתמש ביקש במפורש 'רק פעילים'
+            if (showActiveOnly)
             {
                 products = products.Where(p => p.Active);
             }
@@ -97,19 +103,30 @@ namespace SupplierInventorySystem.Controllers
             }
 
             var product = await _context.Products
+                .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.DefaultUnit)
                 .Include(p => p.ProductVariants)
-                .Include(p => p.SupplierProducts)
-                    .ThenInclude(sp => sp.Supplier)
-                .Include(p => p.PriceHistories.OrderByDescending(ph => ph.EffectiveFrom).Take(10))
-                    .ThenInclude(ph => ph.Supplier)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (product == null)
             {
                 return NotFound();
             }
+
+            await _context.Entry(product)
+                .Collection(p => p.SupplierProducts)
+                .Query()
+                .Include(sp => sp.Supplier)
+                .LoadAsync();
+
+            await _context.Entry(product)
+                .Collection(p => p.PriceHistories)
+                .Query()
+                .Include(ph => ph.Supplier)
+                .OrderByDescending(ph => ph.EffectiveFrom ?? DateTime.MinValue)
+                .Take(10)
+                .LoadAsync();
 
             return View(product);
         }
@@ -128,7 +145,6 @@ namespace SupplierInventorySystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                // בדיקה אם המק"ט כבר קיים
                 if (await _context.Products.AnyAsync(p => p.Sku == product.Sku))
                 {
                     ModelState.AddModelError("Sku", "מק\"ט זה כבר קיים במערכת");
@@ -180,7 +196,6 @@ namespace SupplierInventorySystem.Controllers
             {
                 try
                 {
-                    // בדיקה אם המק"ט כבר קיים (למעט המוצר הנוכחי)
                     if (await _context.Products.AnyAsync(p => p.Sku == product.Sku && p.Id != product.Id))
                     {
                         ModelState.AddModelError("Sku", "מק\"ט זה כבר קיים במערכת");

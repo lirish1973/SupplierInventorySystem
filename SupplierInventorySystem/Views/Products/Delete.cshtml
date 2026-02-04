@@ -1,0 +1,27 @@
+﻿@model SupplierInventorySystem.Models.Product
+@using System
+@{
+    ViewData["Title"] = "מחיקת מוצר";
+}
+
+<h2>מחיקת מוצר</h2>
+
+<h4>אתה בטוח שברצונך למחוק?</h4>
+
+<div>
+    <h4>@Model.Name (@Model.Sku)</h4>
+    <dl class="row">
+        <dt class="col-sm-3">קטגוריה</dt>
+        <dd class="col-sm-9">@Model.Category?.Name</dd>
+
+        <dt class="col-sm-3">תיאור</dt>
+        <dd class="col-sm-9">@Model.Description</dd>
+    </dl>
+</div>
+
+<form asp-action="Delete" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">מחק</button>
+    <a asp-action="Index" class="btn btn-secondary">בטל</a>
+</form>

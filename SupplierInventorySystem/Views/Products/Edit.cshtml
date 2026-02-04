@@ -1,0 +1,99 @@
+﻿@model SupplierInventorySystem.Models.Product
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using System
+@{
+    ViewData["Title"] = "עריכת מוצר";
+    var categoryList = ViewData["CategoryId"] as SelectList;
+    var unitList = ViewData["DefaultUnitId"] as SelectList;
+}
+
+<h2>עריכת מוצר</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CreatedAt" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="Sku"></label>
+                <input asp-for="Sku" class="form-control" />
+                <span asp-validation-for="Sku" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Name"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Description"></label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label asp-for="CategoryId">קטגוריה</label>
+                    <select asp-for="CategoryId" class="form-control" asp-items="@(categoryList)"></select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label asp-for="DefaultUnitId">יחידת ברירת מחדל</label>
+                    <select asp-for="DefaultUnitId" class="form-control" asp-items="@(unitList)"></select>
+                    <span asp-validation-for="DefaultUnitId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <div class="form-check">
+                        <input asp-for="IsService" class="form-check-input" />
+                        <label asp-for="IsService" class="form-check-label"></label>
+                    </div>
+                </div>
+                <div class="form-group col-md-4">
+                    <div class="form-check">
+                        <input asp-for="TrackSerials" class="form-check-input" />
+                        <label asp-for="TrackSerials" class="form-check-label"></label>
+                    </div>
+                </div>
+                <div class="form-group col-md-4">
+                    <div class="form-check">
+                        <input asp-for="TrackLots" class="form-check-input" />
+                        <label asp-for="TrackLots" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label asp-for="ReorderPoint"></label>
+                    <input asp-for="ReorderPoint" step="0.0001" class="form-control" />
+                    <span asp-validation-for="ReorderPoint" class="text-danger"></span>
+                </div>
+                <div class="form-group col-md-6">
+                    <label asp-for="ReorderQty"></label>
+                    <input asp-for="ReorderQty" step="0.0001" class="form-control" />
+                    <span asp-validation-for="ReorderQty" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group form-check">
+                <input asp-for="Active" class="form-check-input" />
+                <label asp-for="Active" class="form-check-label">פעיל</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">שמור</button>
+            <a asp-action="Index" class="btn btn-secondary">בטל</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

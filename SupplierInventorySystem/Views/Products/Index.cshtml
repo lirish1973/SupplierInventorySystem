@@ -1,5 +1,191 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<SupplierInventorySystem.Models.Product>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using System.Collections.Generic
+@using System.Linq
 @{
+    ViewData["Title"] = "מוצרים";
+
+    // גבולות בטוחים לקריאת ערכי ViewData (מניעת שגיאות 'no argument given...' ו-'as' עם value types)
+    var currentFilterObj = ViewData["CurrentFilter"];
+    string currentFilter = currentFilterObj as string ?? string.Empty;
+
+    var currentCategoryObj = ViewData["CurrentCategory"];
+    int? currentCategory = currentCategoryObj == null ? (int?)null : Convert.ToInt32(currentCategoryObj);
+
+    var activeOnlyObj = ViewData["ActiveOnly"];
+    bool activeOnly = activeOnlyObj == null ? true : Convert.ToBoolean(activeOnlyObj);
+
+    // קטגוריות מגיעות מ-ViewBag; בטיחותי לטפל כמוכל
+    var categories = ViewBag.Categories as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+
+    // הכנת מחרוזות מיון מראש — כדי לא לשים ביטויים C# מורכבים בתוך תכונות TagHelper
+    var nameSort = ViewData["NameSortParm"] as string;
+    var skuSort = ViewData["SkuSortParm"] as string;
+    var categorySort = ViewData["CategorySortParm"] as string;
+
+    var nameSortParam = String.IsNullOrEmpty(nameSort) ? "name_desc" : "";
+    var skuSortParam = skuSort == "Sku" ? "sku_desc" : "Sku";
+    var categorySortParam = categorySort == "Category" ? "category_desc" : "Category";
 }
+
+<h2>מוצרים</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<form method="get" asp-action="Index" class="form-inline mb-3">
+    <div class="form-group mr-2">
+        <input type="text" name="searchString" value="@(currentFilter)" class="form-control" placeholder='חפש לפי שם, מק"ט או תיאור' />
+    </div>
+
+    <div class="form-group mr-2">
+        <select name="categoryId" class="form-control">
+            <option value="">-- כל הקטגוריות --</option>
+            @foreach (var c in categories)
+            {
+                // השוואת מחרוזות כדי להמנע מבעיות המרת טיפוסים ישירה בתוך ה-attribute
+                var isSelected = false;
+                if (!String.IsNullOrEmpty(c.Value) && currentCategory.HasValue)
+                {
+                    isSelected = c.Value == currentCategory.Value.ToString();
+                }
+
+                if (isSelected)
+                {
+                    <option value="@c.Value" selected="selected">@c.Text</option>
+                }
+                else
+                {
+                    <option value="@c.Value">@c.Text</option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="form-group form-check mr-2">
+        <input type="checkbox" name="activeOnly" value="true" class="form-check-input" id="activeOnly" @(activeOnly ? "checked" : "") />
+        <label class="form-check-label" for="activeOnly">רק פעילים</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">סנן</button>
+    <a asp-action="Create" class="btn btn-success ml-2">הוסף מוצר</a>
+</form>
+
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>
+                <a asp-action="Index"
+                   asp-route-sortOrder="@nameSortParam"
+                   asp-route-searchString="@currentFilter"
+                   asp-route-categoryId="@(currentCategory)"
+                   asp-route-activeOnly="@(activeOnly)">
+                    שם
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index"
+                   asp-route-sortOrder="@skuSortParam"
+                   asp-route-searchString="@currentFilter"
+                   asp-route-categoryId="@(currentCategory)"
+                   asp-route-activeOnly="@(activeOnly)">
+                    מק"ט
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index"
+                   asp-route-sortOrder="@categorySortParam"
+                   asp-route-searchString="@currentFilter"
+                   asp-route-categoryId="@(currentCategory)"
+                   asp-route-activeOnly="@(activeOnly)">
+                    קטגוריה
+                </a>
+            </th>
+            <th>יחידת ברירת מחדל</th>
+            <th class="text-right">נקודת הזמנה</th>
+            <th class="text-right">כמות הזמנה</th>
+            <th>סטטוס</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Sku</td>
+                    <td>@item.Category?.Name</td>
+                    <td>@item.DefaultUnit?.Code</td>
+
+                    @* טיפול בערכים מספריים: יתכן שהם nullable בהתאם למודל — לכן נבדוק ונשתמש ב-ToString על ה-Value כדי לא לקבל 'No overload' *@
+                    <td class="text-right">
+                        @{
+                            string rpText = String.Empty;
+                            var rpProp = item.GetType().GetProperty("ReorderPoint");
+                            if (rpProp != null)
+                            {
+                                var rpVal = rpProp.GetValue(item);
+                                if (rpVal != null)
+                                {
+                                    // המרה בטוחה ל-decimal כדי לאפשר פורמט
+                                    rpText = Convert.ToDecimal(rpVal).ToString("0.####");
+                                }
+                            }
+                        }
+                        @rpText
+                    </td>
+
+                    <td class="text-right">
+                        @{
+                            string rqText = String.Empty;
+                            var rqProp = item.GetType().GetProperty("ReorderQty");
+                            if (rqProp != null)
+                            {
+                                var rqVal = rqProp.GetValue(item);
+                                if (rqVal != null)
+                                {
+                                    rqText = Convert.ToDecimal(rqVal).ToString("0.####");
+                                }
+                            }
+                        }
+                        @rqText
+                    </td>
+
+                    <td>
+                        @if (item.Active)
+                        {
+                            <span class="badge badge-success" style="color: green;">פעיל</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-secondary">לא פעיל</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">פרטים</a>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">עריכה</a>
+                        @if (item.Active)
+                        {
+                            <a asp-action="Deactivate" asp-route-id="@item.Id" class="btn btn-sm btn-secondary">השבת</a>
+                        }
+                        else
+                        {
+                            <a asp-action="Activate" asp-route-id="@item.Id" class="btn btn-sm btn-success">הפעל</a>
+                        }
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">מחק</a>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="8" class="text-center">לא נמצאו מוצרים</td>
+            </tr>
+        }
+    </tbody>
+</table>
