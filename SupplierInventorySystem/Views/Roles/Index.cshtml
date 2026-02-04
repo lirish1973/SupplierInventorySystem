@@ -1,0 +1,83 @@
+@model IEnumerable<SupplierInventorySystem.ViewModels.RoleViewModel>
+@{
+    ViewData["Title"] = "ניהול תפקידים";
+}
+
+<div class="container" dir="rtl">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-user-tag"></i> ניהול תפקידים</h2>
+        <div>
+            <a asp-action="Create" class="btn btn-success">
+                <i class="fas fa-plus"></i> הוסף תפקיד
+            </a>
+            <a asp-controller="Users" asp-action="Index" class="btn btn-info">
+                <i class="fas fa-users"></i> חזרה למשתמשים
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        @if (Model.Any())
+        {
+            @foreach (var role in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-tag"></i> @role.Name
+                            </h5>
+                            <span class="badge bg-light text-dark">@role.UserCount משתמשים</span>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(role.Description))
+                            {
+                                <p class="card-text">@role.Description</p>
+                            }
+                            else
+                            {
+                                <p class="card-text text-muted fst-italic">אין תיאור</p>
+                            }
+                        </div>
+                        <div class="card-footer bg-light">
+                            <div class="btn-group w-100" role="group">
+                                <a asp-action="Edit" asp-route-id="@role.Id" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i> עריכה
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@role.Id" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> מחיקה
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle fa-3x mb-3 d-block"></i>
+                    <h4>אין תפקידים במערכת</h4>
+                    <p>לחץ על "הוסף תפקיד" כדי ליצור תפקיד חדש</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

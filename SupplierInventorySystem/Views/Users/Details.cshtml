@@ -1,0 +1,149 @@
+@model SupplierInventorySystem.ViewModels.UserDetailsViewModel
+@{
+    ViewData["Title"] = "פרטי משתמש";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-user"></i> פרטי משתמש: @Model.Username</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-info-circle"></i> פרטים אישיים
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-4">שם משתמש</dt>
+                                        <dd class="col-sm-8">@Model.Username</dd>
+
+                                        <dt class="col-sm-4">דוא״ל</dt>
+                                        <dd class="col-sm-8">
+                                            <a href="mailto:@Model.Email">@Model.Email</a>
+                                        </dd>
+
+                                        <dt class="col-sm-4">שם מלא</dt>
+                                        <dd class="col-sm-8">@(Model.FullName ?? "לא צוין")</dd>
+
+                                        <dt class="col-sm-4">תפקיד</dt>
+                                        <dd class="col-sm-8">
+                                            @if (Model.Role != null)
+                                            {
+                                                <span class="badge bg-info fs-6">@Model.Role.Name</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">ללא תפקיד</span>
+                                            }
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-shield-alt"></i> מצב חשבון
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-5">סטטוס</dt>
+                                        <dd class="col-sm-7">
+                                            @if (Model.IsLocked)
+                                            {
+                                                <span class="badge bg-danger fs-6">
+                                                    <i class="fas fa-lock"></i> חסום
+                                                </span>
+                                            }
+                                            else if (Model.IsActive)
+                                            {
+                                                <span class="badge bg-success fs-6">
+                                                    <i class="fas fa-check"></i> פעיל
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary fs-6">
+                                                    <i class="fas fa-times"></i> לא פעיל
+                                                </span>
+                                            }
+                                        </dd>
+
+                                        <dt class="col-sm-5">ניסיונות כושלים</dt>
+                                        <dd class="col-sm-7">
+                                            @if (Model.FailedLoginAttempts > 0)
+                                            {
+                                                <span class="badge bg-warning text-dark">@Model.FailedLoginAttempts</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-success">0</span>
+                                            }
+                                        </dd>
+
+                                        @if (Model.IsLocked && Model.LockoutEnd.HasValue)
+                                        {
+                                            <dt class="col-sm-5">חסום עד</dt>
+                                            <dd class="col-sm-7 text-danger">
+                                                @Model.LockoutEnd.Value.ToString("dd/MM/yyyy HH:mm")
+                                            </dd>
+                                        }
+
+                                        <dt class="col-sm-5">תאריך יצירה</dt>
+                                        <dd class="col-sm-7">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                                        <dt class="col-sm-5">התחברות אחרונה</dt>
+                                        <dd class="col-sm-7">
+                                            @if (Model.LastLogin.HasValue)
+                                            {
+                                                @Model.LastLogin.Value.ToString("dd/MM/yyyy HH:mm")
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">מעולם לא התחבר</span>
+                                            }
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> חזרה לרשימה
+                        </a>
+                        <div>
+                            @if (Model.IsLocked)
+                            {
+                                <form asp-action="Unlock" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-unlock"></i> שחרר מחסימה
+                                    </button>
+                                </form>
+                            }
+                            <a asp-action="ResetPassword" asp-route-id="@Model.Id" class="btn btn-info">
+                                <i class="fas fa-key"></i> איפוס סיסמה
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> עריכה
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> מחיקה
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

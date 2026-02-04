@@ -1,0 +1,109 @@
+@model SupplierInventorySystem.ViewModels.EditUserViewModel
+@{
+    ViewData["Title"] = "עריכת משתמש";
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning">
+                    <h4 class="mb-0"><i class="fas fa-user-edit"></i> עריכת משתמש: @Model.Username</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Username" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input asp-for="Username" class="form-control" />
+                                </div>
+                                <span asp-validation-for="Username" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    <input asp-for="Email" class="form-control" type="email" />
+                                </div>
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input asp-for="FullName" class="form-control" />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RoleId" class="form-label"></label>
+                                <select asp-for="RoleId" asp-items="ViewBag.RoleId" class="form-select">
+                                    <option value="">-- בחר תפקיד --</option>
+                                </select>
+                                <span asp-validation-for="RoleId" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3 d-flex align-items-center">
+                                <div class="form-check form-switch mt-4">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IsActive" class="form-check-label"></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <div class="row text-muted small">
+                                    <div class="col-md-6">
+                                        <i class="fas fa-calendar"></i> נוצר: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                    <div class="col-md-6">
+                                        <i class="fas fa-sign-in-alt"></i> התחברות אחרונה:
+                                        @if (Model.LastLogin.HasValue)
+                                        {
+                                            @Model.LastLogin.Value.ToString("dd/MM/yyyy HH:mm")
+                                        }
+                                        else
+                                        {
+                                            <span>מעולם לא התחבר</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> חזרה לרשימה
+                            </a>
+                            <div>
+                                <a asp-action="ResetPassword" asp-route-id="@Model.Id" class="btn btn-info">
+                                    <i class="fas fa-key"></i> איפוס סיסמה
+                                </a>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-save"></i> שמור שינויים
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

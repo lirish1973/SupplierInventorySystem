@@ -55,6 +55,27 @@
                                 <li><a class="dropdown-item" href="#"><i class="fas fa-chart-line"></i> דוחות מתקדמים</a></li>
                             </ul>
                         </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" || ViewContext.RouteData.Values["controller"]?.ToString() == "Roles" ? "active" : "")"
+                                   href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cogs"></i> ניהול
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Users" asp-action="Index">
+                                            <i class="fas fa-users"></i> ניהול משתמשים
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Roles" asp-action="Index">
+                                            <i class="fas fa-user-tag"></i> ניהול תפקידים
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
                     </ul>
 
                     <!-- תפריט משתמש -->
