@@ -69,7 +69,7 @@ namespace SupplierInventorySystem.Controllers
             var supplier = await _context.Suppliers
                 .Include(s => s.SupplierContacts)
                 .Include(s => s.SupplierAddresses)
-                .Include(s => s.SupplierMetrics.OrderByDescending(m => m.MetricDate).Take(5))
+                .Include(s => s.SupplierMetrics!.OrderByDescending(m => m.MetricDate).Take(5))
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (supplier == null)

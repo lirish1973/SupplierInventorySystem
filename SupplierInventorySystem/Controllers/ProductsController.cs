@@ -119,13 +119,13 @@ namespace SupplierInventorySystem.Controllers
             }
 
             await _context.Entry(product)
-                .Collection(p => p.SupplierProducts)
+                .Collection(p => p.SupplierProducts!)
                 .Query()
                 .Include(sp => sp.Supplier)
                 .LoadAsync();
 
             await _context.Entry(product)
-                .Collection(p => p.PriceHistories)
+                .Collection(p => p.PriceHistories!)
                 .Query()
                 .Include(ph => ph.Supplier)
                 .OrderByDescending(ph => ph.EffectiveFrom ?? DateTime.MinValue)

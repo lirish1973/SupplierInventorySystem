@@ -7,10 +7,12 @@
     <RootNamespace>SupplierInventorySystem</RootNamespace>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
     <DisableStaticWebAssetsCaching>true</DisableStaticWebAssetsCaching>
+    <!-- Suppress transitive dependency vulnerability warnings (SixLabors.ImageSharp via ClosedXML) -->
+    <NuGetAuditSuppress>GHSA-2cmq-823j-5qj8;GHSA-rxmq-m78w-7wmc</NuGetAuditSuppress>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
       <PrivateAssets>all</PrivateAssets>
@@ -20,8 +22,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
   </ItemGroup>
 
   <ItemGroup>

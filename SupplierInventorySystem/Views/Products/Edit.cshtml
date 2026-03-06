@@ -199,7 +199,7 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/product-images.js"></script>
     <script>
-        var productId = @Model.Id;
+        var productId = @(Model!.Id);
         var antiForgeryToken = '@Html.AntiForgeryToken()';
         // Extract the token value
         var tokenMatch = antiForgeryToken.match(/value="([^"]+)"/);
