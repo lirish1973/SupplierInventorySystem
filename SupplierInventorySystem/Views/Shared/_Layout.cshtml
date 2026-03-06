@@ -32,11 +32,23 @@
                                 <i class="fas fa-home"></i> דף הבית
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Suppliers" ? "active" : "")"
-                               asp-controller="Suppliers" asp-action="Index">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["controller"]?.ToString() == "Suppliers" ? "active" : "")"
+                               href="#" id="suppliersDropdown" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-truck"></i> ספקים
                             </a>
+                            <ul class="dropdown-menu" aria-labelledby="suppliersDropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Suppliers" asp-action="Index">
+                                        <i class="fas fa-list"></i> רשימת ספקים
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Suppliers" asp-action="Performance">
+                                        <i class="fas fa-chart-bar"></i> דשבורד ביצועים
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")"

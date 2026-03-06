@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -5,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SupplierInventorySystem.Data;
 using SupplierInventorySystem.Models;
 using SupplierInventorySystem.ViewModels;
+using System.IO;
 using System.Security.Claims;
 
 namespace SupplierInventorySystem.Controllers
@@ -707,6 +709,168 @@ namespace SupplierInventorySystem.Controllers
                 new SelectListItem { Value = "USD", Text = "$ דולר" },
                 new SelectListItem { Value = "EUR", Text = "€ יורו" }
             };
+        }
+
+        // GET: PurchaseOrders/ExportExcel
+        public async Task<IActionResult> ExportExcel(string? status, int? supplierId, DateTime? fromDate, DateTime? toDate)
+        {
+            var query = _context.PurchaseOrders
+                .Include(po => po.Supplier)
+                .Include(po => po.Items)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(po => po.Status == status);
+            if (supplierId.HasValue)
+                query = query.Where(po => po.SupplierId == supplierId.Value);
+            if (fromDate.HasValue)
+                query = query.Where(po => po.OrderDate >= fromDate.Value);
+            if (toDate.HasValue)
+                query = query.Where(po => po.OrderDate <= toDate.Value);
+
+            var orders = await query.OrderByDescending(po => po.OrderDate).ToListAsync();
+
+            using var workbook = new XLWorkbook();
+
+            // === גיליון 1: סיכום הזמנות ===
+            var ws = workbook.Worksheets.Add("הזמנות רכש");
+
+            // כותרת
+            ws.Cell(1, 1).Value = "דוח הזמנות רכש - " + DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+            ws.Range(1, 1, 1, 10).Merge();
+            ws.Cell(1, 1).Style.Font.Bold = true;
+            ws.Cell(1, 1).Style.Font.FontSize = 14;
+            ws.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#2c3e50");
+            ws.Cell(1, 1).Style.Font.FontColor = XLColor.White;
+
+            // כותרות עמודות
+            var headers = new[] { "מספר הזמנה", "ספק", "תאריך הזמנה", "תאריך אספקה צפוי", "תאריך אספקה בפועל", "סטטוס", "פריטים", "סכום", "מע\"מ", "סה\"כ" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(2, i + 1);
+                cell.Value = headers[i];
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#2980b9");
+                cell.Style.Font.FontColor = XLColor.White;
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            }
+
+            // צבעי סטטוס
+            var statusColors = new Dictionary<string, string>
+            {
+                { "Draft", "#ecf0f1" },
+                { "Sent", "#d6eaf8" },
+                { "Confirmed", "#d5f5e3" },
+                { "Shipped", "#fef9e7" },
+                { "PartiallyReceived", "#fdebd0" },
+                { "Received", "#d5f5e3" },
+                { "Cancelled", "#fadbd8" }
+            };
+
+            int row = 3;
+            decimal grandTotal = 0;
+            foreach (var po in orders)
+            {
+                string statusHeb = PurchaseOrderStatus.GetDisplayName(po.Status);
+                string bgColor = statusColors.TryGetValue(po.Status, out var c) ? c : "#ffffff";
+
+                ws.Cell(row, 1).Value = po.OrderNumber;
+                ws.Cell(row, 2).Value = po.Supplier?.Name ?? "";
+                ws.Cell(row, 3).Value = po.OrderDate.ToString("dd/MM/yyyy");
+                ws.Cell(row, 4).Value = po.ExpectedDeliveryDate?.ToString("dd/MM/yyyy") ?? "-";
+                ws.Cell(row, 5).Value = po.ActualDeliveryDate?.ToString("dd/MM/yyyy") ?? "-";
+                ws.Cell(row, 6).Value = statusHeb;
+                ws.Cell(row, 7).Value = po.Items?.Count ?? 0;
+                ws.Cell(row, 8).Value = (double)po.Subtotal;
+                ws.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00";
+                ws.Cell(row, 9).Value = (double)po.TaxAmount;
+                ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+                ws.Cell(row, 10).Value = (double)po.TotalAmount;
+                ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
+
+                ws.Range(row, 1, row, 10).Style.Fill.BackgroundColor = XLColor.FromHtml(bgColor);
+                ws.Range(row, 1, row, 10).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                ws.Range(row, 1, row, 10).Style.Border.InsideBorder = XLBorderStyleValues.Hair;
+
+                grandTotal += po.TotalAmount;
+                row++;
+            }
+
+            // שורת סיכום
+            ws.Cell(row, 1).Value = $"סה\"כ {orders.Count} הזמנות";
+            ws.Cell(row, 1).Style.Font.Bold = true;
+            ws.Range(row, 1, row, 9).Merge();
+            ws.Cell(row, 10).Value = (double)grandTotal;
+            ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
+            ws.Cell(row, 10).Style.Font.Bold = true;
+            ws.Range(row, 1, row, 10).Style.Fill.BackgroundColor = XLColor.FromHtml("#bdc3c7");
+            ws.Range(row, 1, row, 10).Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
+
+            ws.Columns().AdjustToContents();
+            ws.RightToLeft = true;
+
+            // === גיליון 2: פריטים מפורטים ===
+            var ws2 = workbook.Worksheets.Add("פריטי הזמנה");
+            var headers2 = new[] { "מספר הזמנה", "ספק", "מוצר", "תיאור", "כמות", "כמות שהתקבלה", "מחיר יחידה", "הנחה %", "סה\"כ שורה" };
+            ws2.Cell(1, 1).Value = "פריטי הזמנות רכש - " + DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+            ws2.Range(1, 1, 1, 9).Merge();
+            ws2.Cell(1, 1).Style.Font.Bold = true;
+            ws2.Cell(1, 1).Style.Font.FontSize = 14;
+            ws2.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws2.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#2c3e50");
+            ws2.Cell(1, 1).Style.Font.FontColor = XLColor.White;
+
+            for (int i = 0; i < headers2.Length; i++)
+            {
+                var cell = ws2.Cell(2, i + 1);
+                cell.Value = headers2[i];
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#8e44ad");
+                cell.Style.Font.FontColor = XLColor.White;
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            }
+
+            int row2 = 3;
+            foreach (var po in orders)
+            {
+                if (po.Items == null) continue;
+                foreach (var item in po.Items)
+                {
+                    ws2.Cell(row2, 1).Value = po.OrderNumber;
+                    ws2.Cell(row2, 2).Value = po.Supplier?.Name ?? "";
+                    ws2.Cell(row2, 3).Value = item.Product?.Name ?? "";
+                    ws2.Cell(row2, 4).Value = item.Description ?? "";
+                    ws2.Cell(row2, 5).Value = (double)item.Quantity;
+                    ws2.Cell(row2, 5).Style.NumberFormat.Format = "#,##0.##";
+                    ws2.Cell(row2, 6).Value = (double)item.QuantityReceived;
+                    ws2.Cell(row2, 6).Style.NumberFormat.Format = "#,##0.##";
+                    ws2.Cell(row2, 7).Value = (double)item.UnitPrice;
+                    ws2.Cell(row2, 7).Style.NumberFormat.Format = "#,##0.00";
+                    ws2.Cell(row2, 8).Value = (double)item.DiscountPercent;
+                    ws2.Cell(row2, 8).Style.NumberFormat.Format = "0.##\"%\"";
+                    ws2.Cell(row2, 9).Value = (double)item.LineTotal;
+                    ws2.Cell(row2, 9).Style.NumberFormat.Format = "#,##0.00";
+
+                    // צביעה לסירוגין
+                    if (row2 % 2 == 0)
+                        ws2.Range(row2, 1, row2, 9).Style.Fill.BackgroundColor = XLColor.FromHtml("#f8f9fa");
+
+                    ws2.Range(row2, 1, row2, 9).Style.Border.InsideBorder = XLBorderStyleValues.Hair;
+                    ws2.Range(row2, 1, row2, 9).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                    row2++;
+                }
+            }
+            ws2.Columns().AdjustToContents();
+            ws2.RightToLeft = true;
+
+            string filename = $"purchase_orders_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Position = 0;
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
         }
 
         #endregion
