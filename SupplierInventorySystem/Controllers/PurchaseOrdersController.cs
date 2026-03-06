@@ -502,25 +502,25 @@ namespace SupplierInventorySystem.Controllers
             bool allReceived = true;
             foreach (var receiveItem in model.Items)
             {
+                var item = order.Items?.FirstOrDefault(i => i.Id == receiveItem.ItemId);
+                if (item == null) continue;
+
                 if (receiveItem.QuantityToReceive > 0)
                 {
-                    var item = order.Items?.FirstOrDefault(i => i.Id == receiveItem.ItemId);
-                    if (item != null)
+                    item.QuantityReceived += receiveItem.QuantityToReceive;
+
+                    // ✅ עדכון מלאי בפועל במוצר
+                    var product = await _context.Products.FindAsync(item.ProductId);
+                    if (product != null)
                     {
-                        item.QuantityReceived += receiveItem.QuantityToReceive;
-                        if (item.QuantityReceived < item.Quantity)
-                        {
-                            allReceived = false;
-                        }
+                        product.StockQuantity += receiveItem.QuantityToReceive;
+                        product.UpdatedAt = DateTime.Now;
                     }
                 }
-                else
+
+                if (item.QuantityReceived < item.Quantity)
                 {
-                    var item = order.Items?.FirstOrDefault(i => i.Id == receiveItem.ItemId);
-                    if (item != null && item.QuantityReceived < item.Quantity)
-                    {
-                        allReceived = false;
-                    }
+                    allReceived = false;
                 }
             }
 
@@ -540,7 +540,7 @@ namespace SupplierInventorySystem.Controllers
 
             await _context.SaveChangesAsync();
 
-            var message = allReceived ? "כל הסחורה התקבלה בהצלחה!" : "הסחורה התקבלה חלקית";
+            var message = allReceived ? "כל הסחורה התקבלה - המלאי עודכן!" : "הסחורה התקבלה חלקית - המלאי עודכן";
             TempData["SuccessMessage"] = message;
 
             return RedirectToAction(nameof(Details), new { id = model.PurchaseOrderId });

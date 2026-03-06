@@ -48,6 +48,7 @@ namespace SupplierInventorySystem.ViewModels
         public int Id { get; set; }
         public string Sku { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public decimal StockQuantity { get; set; }
         public decimal ReorderPoint { get; set; }
         public decimal ReorderQty { get; set; }
         public string Unit { get; set; } = string.Empty;

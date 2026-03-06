@@ -46,16 +46,18 @@ namespace SupplierInventorySystem.Controllers
                 TotalUsers = await _context.Users.CountAsync(),
                 ActiveUsers = await _context.Users.CountAsync(u => u.IsActive),
 
-                // מוצרים מתחת לנקודת הזמנה
+                // מוצרים שמלאי בפועל נמוך מנקודת ההזמנה
                 LowStockProducts = await _context.Products
-                    .Where(p => p.Active && !p.IsService && p.ReorderPoint > 0)
-                    .OrderBy(p => p.Name)
+                    .Include(p => p.DefaultUnit)
+                    .Where(p => p.Active && !p.IsService && p.ReorderPoint > 0 && p.StockQuantity <= p.ReorderPoint)
+                    .OrderBy(p => p.StockQuantity)
                     .Take(10)
                     .Select(p => new LowStockProductDto
                     {
                         Id = p.Id,
                         Sku = p.Sku,
                         Name = p.Name,
+                        StockQuantity = p.StockQuantity,
                         ReorderPoint = p.ReorderPoint,
                         ReorderQty = p.ReorderQty,
                         Unit = p.DefaultUnit != null ? p.DefaultUnit.Code : ""

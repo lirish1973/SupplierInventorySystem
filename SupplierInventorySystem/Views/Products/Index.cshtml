@@ -104,8 +104,8 @@
                 </a>
             </th>
             <th>יחידת ברירת מחדל</th>
+            <th class="text-center">מלאי</th>
             <th class="text-right">נקודת הזמנה</th>
-            <th class="text-right">כמות הזמנה</th>
             <th>סטטוס</th>
             <th></th>
         </tr>
@@ -122,37 +122,23 @@
                     <td>@item.DefaultUnit?.Code</td>
 
                     @* טיפול בערכים מספריים: יתכן שהם nullable בהתאם למודל — לכן נבדוק ונשתמש ב-ToString על ה-Value כדי לא לקבל 'No overload' *@
-                    <td class="text-right">
+                    <td class="text-center">
                         @{
-                            string rpText = String.Empty;
-                            var rpProp = item.GetType().GetProperty("ReorderPoint");
-                            if (rpProp != null)
-                            {
-                                var rpVal = rpProp.GetValue(item);
-                                if (rpVal != null)
-                                {
-                                    // המרה בטוחה ל-decimal כדי לאפשר פורמט
-                                    rpText = Convert.ToDecimal(rpVal).ToString("0.####");
-                                }
-                            }
+                            bool isLowStock = item.ReorderPoint > 0 && item.StockQuantity <= item.ReorderPoint;
+                            string stockClass = isLowStock ? "badge bg-danger" : "badge bg-success";
+                            string stockIcon = isLowStock ? "⚠️" : "✓";
                         }
-                        @rpText
+                        <span class="@stockClass">
+                            @item.StockQuantity.ToString("0.##") @item.DefaultUnit?.Code
+                        </span>
+                        @if (isLowStock)
+                        {
+                            <br /><small class="text-danger">נקודת הזמנה: @item.ReorderPoint.ToString("0.##")</small>
+                        }
                     </td>
 
                     <td class="text-right">
-                        @{
-                            string rqText = String.Empty;
-                            var rqProp = item.GetType().GetProperty("ReorderQty");
-                            if (rqProp != null)
-                            {
-                                var rqVal = rqProp.GetValue(item);
-                                if (rqVal != null)
-                                {
-                                    rqText = Convert.ToDecimal(rqVal).ToString("0.####");
-                                }
-                            }
-                        }
-                        @rqText
+                        @item.ReorderPoint.ToString("0.####")
                     </td>
 
                     <td>

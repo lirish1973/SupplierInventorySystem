@@ -46,6 +46,10 @@ namespace SupplierInventorySystem.Models
         [Display(Name = "מעקב אצוות")]
         public bool TrackLots { get; set; } = false;
 
+        [Column("stock_quantity")]
+        [Display(Name = "כמות במלאי")]
+        public decimal StockQuantity { get; set; } = 0;
+
         [Column("reorder_point")]
         [Display(Name = "נקודת הזמנה")]
         public decimal ReorderPoint { get; set; } = 0;
