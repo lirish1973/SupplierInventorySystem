@@ -71,6 +71,14 @@
 
     <button type="submit" class="btn btn-primary">סנן</button>
     <a asp-action="Create" class="btn btn-success ml-2">הוסף מוצר</a>
+    <div class="btn-group ml-2" role="group">
+        <a asp-action="ExportExcel" asp-route-lowStockOnly="false" class="btn btn-outline-secondary">
+            <i class="fas fa-file-excel"></i> יצוא Excel
+        </a>
+        <a asp-action="ExportExcel" asp-route-lowStockOnly="true" class="btn btn-outline-danger">
+            <i class="fas fa-exclamation-triangle"></i> רק מלאי נמוך
+        </a>
+    </div>
 </form>
 
 <table class="table table-striped table-bordered">

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using ClosedXML.Excel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SupplierInventorySystem.Data;
 using SupplierInventorySystem.Models;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -382,6 +384,110 @@ namespace SupplierInventorySystem.Controllers
             var direction = quantityChange > 0 ? "נוסף" : "הורד";
             TempData["SuccessMessage"] = $"המלאי עודכן! {Math.Abs(quantityChange)} {direction} - מלאי חדש: {qtyAfter}";
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // GET: Products/ExportExcel
+        public async Task<IActionResult> ExportExcel(bool? lowStockOnly)
+        {
+            var query = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.DefaultUnit)
+                .Where(p => p.Active)
+                .AsQueryable();
+
+            if (lowStockOnly == true)
+                query = query.Where(p => !p.IsService && p.ReorderPoint > 0 && p.StockQuantity <= p.ReorderPoint);
+
+            var products = await query
+                .OrderBy(p => p.Category != null ? p.Category.Name : "")
+                .ThenBy(p => p.Name)
+                .ToListAsync();
+
+            using var workbook = new XLWorkbook();
+            var ws = workbook.Worksheets.Add("דוח מלאי");
+
+            // כותרת ראשית
+            ws.Cell(1, 1).Value = "דוח מלאי - " + DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+            ws.Range(1, 1, 1, 8).Merge();
+            ws.Cell(1, 1).Style.Font.Bold = true;
+            ws.Cell(1, 1).Style.Font.FontSize = 14;
+            ws.Cell(1, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#2c3e50");
+            ws.Cell(1, 1).Style.Font.FontColor = XLColor.White;
+
+            // כותרות עמודות
+            var headers = new[] { "SKU", "שם מוצר", "קטגוריה", "יחידה", "מלאי נוכחי", "נקודת הזמנה", "כמות הזמנה", "סטטוס" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(2, i + 1);
+                cell.Value = headers[i];
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#3498db");
+                cell.Style.Font.FontColor = XLColor.White;
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            }
+
+            // נתונים
+            int row = 3;
+            foreach (var p in products)
+            {
+                bool isLow = !p.IsService && p.ReorderPoint > 0 && p.StockQuantity <= p.ReorderPoint;
+                string status = p.IsService ? "שירות" : (isLow ? "⚠ מלאי נמוך" : "✓ תקין");
+
+                ws.Cell(row, 1).Value = p.Sku ?? "";
+                ws.Cell(row, 2).Value = p.Name;
+                ws.Cell(row, 3).Value = p.Category?.Name ?? "";
+                ws.Cell(row, 4).Value = p.DefaultUnit?.Code ?? "";
+                ws.Cell(row, 5).Value = (double)p.StockQuantity;
+                ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0.##";
+                ws.Cell(row, 6).Value = (double)p.ReorderPoint;
+                ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.##";
+                ws.Cell(row, 7).Value = (double)p.ReorderQty;
+                ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.##";
+                ws.Cell(row, 8).Value = status;
+
+                // צביעה לשורות מלאי נמוך
+                if (isLow)
+                {
+                    ws.Range(row, 1, row, 8).Style.Fill.BackgroundColor = XLColor.FromHtml("#fde8e8");
+                    ws.Cell(row, 8).Style.Font.FontColor = XLColor.FromHtml("#c0392b");
+                    ws.Cell(row, 8).Style.Font.Bold = true;
+                }
+                else if (row % 2 == 0)
+                {
+                    ws.Range(row, 1, row, 8).Style.Fill.BackgroundColor = XLColor.FromHtml("#f8f9fa");
+                }
+
+                // גבולות
+                ws.Range(row, 1, row, 8).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                ws.Range(row, 1, row, 8).Style.Border.InsideBorder = XLBorderStyleValues.Hair;
+
+                row++;
+            }
+
+            // שורת סיכום
+            ws.Cell(row, 1).Value = "סה\"כ מוצרים:";
+            ws.Cell(row, 1).Style.Font.Bold = true;
+            ws.Cell(row, 2).Value = products.Count;
+            ws.Range(row, 1, row, 8).Style.Fill.BackgroundColor = XLColor.FromHtml("#ecf0f1");
+            ws.Range(row, 1, row, 8).Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
+
+            // רוחב עמודות אוטומטי
+            ws.Columns().AdjustToContents();
+            ws.Column(2).Width = Math.Max(ws.Column(2).Width, 25); // שם מוצר - מינימום
+
+            // כיוון גיליון RTL
+            ws.RightToLeft = true;
+
+            // שם קובץ
+            string suffix = lowStockOnly == true ? "_מלאי_נמוך" : "_מלאי_מלא";
+            string filename = $"stock_report{suffix}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Position = 0;
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
         }
 
         private bool ProductExists(int id)
