@@ -313,6 +313,77 @@ namespace SupplierInventorySystem.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // GET: Products/AdjustStock/5
+        public async Task<IActionResult> AdjustStock(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var product = await _context.Products
+                .Include(p => p.DefaultUnit)
+                .Include(p => p.StockAdjustmentLogs!.OrderByDescending(l => l.AdjustedAt).Take(10))
+                    .ThenInclude(l => l.AdjustedBy)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null) return NotFound();
+
+            return View(product);
+        }
+
+        // POST: Products/AdjustStock/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AdjustStock(int id, decimal quantityChange, string reason)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return NotFound();
+
+            if (quantityChange == 0)
+            {
+                TempData["ErrorMessage"] = "כמות השינוי חייבת להיות שונה מאפס";
+                return RedirectToAction(nameof(AdjustStock), new { id });
+            }
+
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                TempData["ErrorMessage"] = "יש להזין סיבה לעדכון המלאי";
+                return RedirectToAction(nameof(AdjustStock), new { id });
+            }
+
+            var qtyBefore = product.StockQuantity;
+            var qtyAfter = product.StockQuantity + quantityChange;
+
+            if (qtyAfter < 0)
+            {
+                TempData["ErrorMessage"] = $"לא ניתן להוריד מלאי לערך שלילי (מלאי נוכחי: {qtyBefore})";
+                return RedirectToAction(nameof(AdjustStock), new { id });
+            }
+
+            // עדכון המלאי
+            product.StockQuantity = qtyAfter;
+            product.UpdatedAt = DateTime.Now;
+
+            // רישום בלוג
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            int? userId = int.TryParse(userIdClaim, out int uid) ? uid : null;
+
+            _context.StockAdjustmentLogs.Add(new StockAdjustmentLog
+            {
+                ProductId = id,
+                QuantityChange = quantityChange,
+                QuantityBefore = qtyBefore,
+                QuantityAfter = qtyAfter,
+                Reason = reason.Trim(),
+                AdjustedById = userId,
+                AdjustedAt = DateTime.Now
+            });
+
+            await _context.SaveChangesAsync();
+
+            var direction = quantityChange > 0 ? "נוסף" : "הורד";
+            TempData["SuccessMessage"] = $"המלאי עודכן! {Math.Abs(quantityChange)} {direction} - מלאי חדש: {qtyAfter}";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);

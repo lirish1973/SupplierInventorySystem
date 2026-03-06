@@ -81,5 +81,6 @@ namespace SupplierInventorySystem.Models
         public ICollection<SupplierProduct>? SupplierProducts { get; set; }
         public ICollection<ProductPriceHistory>? PriceHistories { get; set; }
         public ICollection<ProductImage>? ProductImages { get; set; }
+        public ICollection<StockAdjustmentLog>? StockAdjustmentLogs { get; set; }
     }
 }

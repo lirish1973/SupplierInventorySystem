@@ -28,6 +28,7 @@ namespace SupplierInventorySystem.Data
         public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
         public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
         public DbSet<ProductImage> ProductImages { get; set; }
+        public DbSet<StockAdjustmentLog> StockAdjustmentLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

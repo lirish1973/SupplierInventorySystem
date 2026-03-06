@@ -1,0 +1,239 @@
+@model SupplierInventorySystem.Models.Product
+@{
+    ViewData["Title"] = "עדכון מלאי";
+    bool isLowStock = Model.ReorderPoint > 0 && Model.StockQuantity <= Model.ReorderPoint;
+}
+
+<div class="container" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            <div class="d-flex align-items-center mb-4">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <h2 class="mb-0">
+                    <i class="fas fa-boxes text-primary"></i> עדכון מלאי
+                </h2>
+            </div>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                </div>
+            }
+
+            <!-- מצב מלאי נוכחי -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-box"></i> @Model.Name
+                        <span class="badge bg-light text-dark ms-2">@Model.Sku</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="h2 fw-bold @(isLowStock ? "text-danger" : "text-success")">
+                                @Model.StockQuantity.ToString("0.##")
+                            </div>
+                            <div class="text-muted small">מלאי נוכחי (@Model.DefaultUnit?.Code)</div>
+                            @if (isLowStock)
+                            {
+                                <span class="badge bg-danger mt-1">מלאי נמוך!</span>
+                            }
+                        </div>
+                        <div class="col-4">
+                            <div class="h2 fw-bold text-warning">@Model.ReorderPoint.ToString("0.##")</div>
+                            <div class="text-muted small">נקודת הזמנה</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="h2 fw-bold text-info">@Model.ReorderQty.ToString("0.##")</div>
+                            <div class="text-muted small">כמות להזמנה</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- טופס עדכון -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-edit"></i> ביצוע עדכון</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AdjustStock" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- כפתורי סוג פעולה -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">סוג פעולה</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="adjustType"
+                                           id="typeAdd" value="add" checked onchange="toggleSign(this)">
+                                    <label class="form-check-label text-success fw-bold" for="typeAdd">
+                                        <i class="fas fa-plus-circle"></i> הוספה למלאי
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="adjustType"
+                                           id="typeRemove" value="remove" onchange="toggleSign(this)">
+                                    <label class="form-check-label text-danger fw-bold" for="typeRemove">
+                                        <i class="fas fa-minus-circle"></i> הורדה ממלאי
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- כמות -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">כמות <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text fw-bold text-success" id="signDisplay">+</span>
+                                <input type="number" name="quantityChange" id="quantityInput"
+                                       class="form-control form-control-lg text-center"
+                                       min="0.001" step="0.001" placeholder="0"
+                                       required style="font-size:1.5rem;" />
+                                <span class="input-group-text">@Model.DefaultUnit?.Code</span>
+                            </div>
+                            <div class="form-text" id="newStockPreview"></div>
+                        </div>
+
+                        <!-- סיבה -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">סיבה <span class="text-danger">*</span></label>
+                            <select name="reason" class="form-select" id="reasonSelect" onchange="toggleCustomReason(this)" required>
+                                <option value="">-- בחר סיבה --</option>
+                                <option value="ספירת מלאי - תיקון הפרש">ספירת מלאי - תיקון הפרש</option>
+                                <option value="נזק / פגם במוצר">נזק / פגם במוצר</option>
+                                <option value="החזרה מלקוח">החזרה מלקוח</option>
+                                <option value="העברה בין מחסנים">העברה בין מחסנים</option>
+                                <option value="תיקון שגיאת הזנה">תיקון שגיאת הזנה</option>
+                                <option value="custom">אחר (הזן ידנית)</option>
+                            </select>
+                            <input type="text" id="customReason" class="form-control mt-2 d-none"
+                                   placeholder="הזן סיבה..." maxlength="255" />
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> ביטול
+                            </a>
+                            <button type="submit" class="btn btn-warning btn-lg" id="submitBtn" disabled>
+                                <i class="fas fa-save"></i> שמור עדכון
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- היסטוריית עדכונים -->
+            @if (Model.StockAdjustmentLogs != null && Model.StockAdjustmentLogs.Any())
+            {
+                <div class="card shadow">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-history"></i> היסטוריית עדכונים אחרונים</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>תאריך</th>
+                                    <th class="text-center">שינוי</th>
+                                    <th class="text-center">לפני</th>
+                                    <th class="text-center">אחרי</th>
+                                    <th>סיבה</th>
+                                    <th>משתמש</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in Model.StockAdjustmentLogs)
+                                {
+                                    <tr>
+                                        <td><small>@log.AdjustedAt.ToString("dd/MM/yy HH:mm")</small></td>
+                                        <td class="text-center fw-bold @(log.QuantityChange > 0 ? "text-success" : "text-danger")">
+                                            @(log.QuantityChange > 0 ? "+" : "")@log.QuantityChange.ToString("0.##")
+                                        </td>
+                                        <td class="text-center text-muted">@log.QuantityBefore.ToString("0.##")</td>
+                                        <td class="text-center fw-bold">@log.QuantityAfter.ToString("0.##")</td>
+                                        <td><small>@log.Reason</small></td>
+                                        <td><small>@(log.AdjustedBy?.FullName ?? log.AdjustedBy?.Username ?? "-")</small></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const currentStock = @Model.StockQuantity;
+    let isAdding = true;
+
+    function toggleSign(radio) {
+        isAdding = radio.value === 'add';
+        document.getElementById('signDisplay').textContent = isAdding ? '+' : '-';
+        document.getElementById('signDisplay').className = isAdding
+            ? 'input-group-text fw-bold text-success'
+            : 'input-group-text fw-bold text-danger';
+        updatePreview();
+    }
+
+    function updatePreview() {
+        const qty = parseFloat(document.getElementById('quantityInput').value) || 0;
+        const change = isAdding ? qty : -qty;
+        const newStock = currentStock + change;
+        const preview = document.getElementById('newStockPreview');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (qty > 0) {
+            const color = newStock < 0 ? 'text-danger' : (newStock <= @Model.ReorderPoint && @Model.ReorderPoint > 0 ? 'text-warning' : 'text-success');
+            preview.innerHTML = `<span class="${color} fw-bold">מלאי חדש: ${newStock.toFixed(2)}</span>`;
+            submitBtn.disabled = newStock < 0;
+        } else {
+            preview.textContent = '';
+            submitBtn.disabled = true;
+        }
+    }
+
+    function toggleCustomReason(select) {
+        const custom = document.getElementById('customReason');
+        if (select.value === 'custom') {
+            custom.classList.remove('d-none');
+            custom.required = true;
+            select.required = false;
+        } else {
+            custom.classList.add('d-none');
+            custom.required = false;
+            select.required = true;
+        }
+    }
+
+    document.getElementById('quantityInput').addEventListener('input', updatePreview);
+
+    // לפני שליחת הטופס - אם custom reason, העבר לשדה reason
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const select = document.getElementById('reasonSelect');
+        const custom = document.getElementById('customReason');
+        if (select.value === 'custom') {
+            if (!custom.value.trim()) {
+                e.preventDefault();
+                custom.classList.add('is-invalid');
+                return;
+            }
+            select.name = '_reason_ignore';
+            custom.name = 'reason';
+        }
+        // הפוך כמות לשלילית אם צריך
+        const qtyInput = document.getElementById('quantityInput');
+        if (!isAdding) {
+            qtyInput.value = -Math.abs(parseFloat(qtyInput.value));
+        }
+    });
+</script>
+}
