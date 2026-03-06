@@ -30,6 +30,84 @@
         </div>
     </div>
 
+    <!-- קרוסלת מוצרים מובילים -->
+    @if (Model.TopProducts.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3 bg-dark text-white d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold">
+                            <i class="fas fa-fire text-warning"></i> מוצרים מובילים
+                        </h6>
+                        <div>
+                            <button class="btn btn-sm btn-outline-light me-1" type="button" data-bs-target="#topProductsCarousel" data-bs-slide="prev">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-light" type="button" data-bs-target="#topProductsCarousel" data-bs-slide="next">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="topProductsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000">
+                            <div class="carousel-indicators">
+                                @for (int i = 0; i < Model.TopProducts.Count; i++)
+                                {
+                                    <button type="button" data-bs-target="#topProductsCarousel" data-bs-slide-to="@i"
+                                            class="@(i == 0 ? "active" : "")" style="background-color: #333;"></button>
+                                }
+                            </div>
+                            <div class="carousel-inner">
+                                @for (int i = 0; i < Model.TopProducts.Count; i++)
+                                {
+                                    var prod = Model.TopProducts[i];
+                                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                                        <div class="row g-0 align-items-center" style="min-height: 220px;">
+                                            <div class="col-md-5 text-center p-4">
+                                                @if (!string.IsNullOrEmpty(prod.ImagePath))
+                                                {
+                                                    <img src="@prod.ImagePath" class="img-fluid rounded shadow-sm"
+                                                         alt="@prod.Name" style="max-height: 180px; object-fit: contain;" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="d-flex align-items-center justify-content-center" style="height: 180px;">
+                                                        <i class="fas fa-box-open fa-5x text-muted opacity-25"></i>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="col-md-7 p-4">
+                                                <h4 class="fw-bold mb-2">@prod.Name</h4>
+                                                <p class="mb-2">
+                                                    <span class="badge bg-primary">@prod.Sku</span>
+                                                    @if (!string.IsNullOrEmpty(prod.CategoryName))
+                                                    {
+                                                        <span class="badge bg-info">@prod.CategoryName</span>
+                                                    }
+                                                </p>
+                                                @if (prod.OrderCount > 0)
+                                                {
+                                                    <p class="text-muted mb-3">
+                                                        <i class="fas fa-shopping-cart"></i> @prod.OrderCount הזמנות
+                                                        | <i class="fas fa-cubes"></i> @prod.TotalQuantity.ToString("0.##") יח' הוזמנו
+                                                    </p>
+                                                }
+                                                <a href="/Products/Details/@prod.Id" class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> צפה במוצר
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <!-- התראות -->
     @if (Model.Alerts.Any())
     {

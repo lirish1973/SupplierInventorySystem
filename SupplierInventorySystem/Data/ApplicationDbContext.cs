@@ -27,6 +27,7 @@ namespace SupplierInventorySystem.Data
         public DbSet<ProductPriceHistory> ProductPriceHistories { get; set; }
         public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
         public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
+        public DbSet<ProductImage> ProductImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,6 +38,16 @@ namespace SupplierInventorySystem.Data
                 .HasKey(rp => new { rp.RoleId, rp.PermissionId });
 
             // Configure relationships and indexes as needed
+
+            // ProductImage configuration
+            modelBuilder.Entity<ProductImage>()
+                .HasOne(pi => pi.Product)
+                .WithMany(p => p.ProductImages)
+                .HasForeignKey(pi => pi.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductImage>()
+                .HasIndex(pi => new { pi.ProductId, pi.DisplayOrder });
         }
     }
 }

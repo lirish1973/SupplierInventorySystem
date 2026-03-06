@@ -44,6 +44,7 @@ namespace SupplierInventorySystem.Controllers
             var products = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.DefaultUnit)
+                .Include(p => p.ProductImages)
                 .AsQueryable();
 
             // סינון לפי סטטוס — רק כאשר המשתמש ביקש במפורש 'רק פעילים'
@@ -107,6 +108,7 @@ namespace SupplierInventorySystem.Controllers
                 .Include(p => p.Category)
                 .Include(p => p.DefaultUnit)
                 .Include(p => p.ProductVariants)
+                .Include(p => p.ProductImages!.OrderBy(pi => pi.DisplayOrder))
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (product == null)
@@ -172,7 +174,9 @@ namespace SupplierInventorySystem.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .Include(p => p.ProductImages!.OrderBy(pi => pi.DisplayOrder))
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (product == null)
             {
                 return NotFound();

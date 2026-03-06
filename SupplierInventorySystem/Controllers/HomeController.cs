@@ -105,6 +105,9 @@ namespace SupplierInventorySystem.Controllers
                     .Take(7)
                     .ToListAsync(),
 
+                // מוצרים מובילים (הכי מוזמנים)
+                TopProducts = await GetTopProductsAsync(),
+
                 // רשימת התראות
                 Alerts = new List<AlertDto>()
             };
@@ -163,6 +166,74 @@ namespace SupplierInventorySystem.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        private async Task<List<TopProductDto>> GetTopProductsAsync()
+        {
+            // נסה למצוא מוצרים הכי מוזמנים לפי PurchaseOrderItems
+            var topByOrders = await _context.PurchaseOrderItems
+                .GroupBy(poi => poi.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    OrderCount = g.Count(),
+                    TotalQuantity = g.Sum(x => x.Quantity)
+                })
+                .OrderByDescending(x => x.TotalQuantity)
+                .Take(3)
+                .ToListAsync();
+
+            if (topByOrders.Any())
+            {
+                var productIds = topByOrders.Select(x => x.ProductId).ToList();
+                var products = await _context.Products
+                    .Include(p => p.Category)
+                    .Include(p => p.ProductImages)
+                    .Where(p => productIds.Contains(p.Id))
+                    .ToListAsync();
+
+                return topByOrders.Select(t =>
+                {
+                    var p = products.FirstOrDefault(pr => pr.Id == t.ProductId);
+                    var primaryImg = p?.ProductImages?.FirstOrDefault(i => i.IsPrimary) ?? p?.ProductImages?.FirstOrDefault();
+                    return new TopProductDto
+                    {
+                        Id = p?.Id ?? 0,
+                        Name = p?.Name ?? "",
+                        Sku = p?.Sku ?? "",
+                        CategoryName = p?.Category?.Name,
+                        ImagePath = primaryImg?.FilePath,
+                        ThumbPath = primaryImg?.ThumbPath,
+                        OrderCount = t.OrderCount,
+                        TotalQuantity = t.TotalQuantity
+                    };
+                }).ToList();
+            }
+
+            // Fallback: 3 מוצרים פעילים אקראיים (כשאין הזמנות)
+            var fallbackProducts = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductImages)
+                .Where(p => p.Active)
+                .OrderBy(p => Guid.NewGuid()) // Random order
+                .Take(3)
+                .ToListAsync();
+
+            return fallbackProducts.Select(p =>
+            {
+                var primaryImg = p.ProductImages?.FirstOrDefault(i => i.IsPrimary) ?? p.ProductImages?.FirstOrDefault();
+                return new TopProductDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Sku = p.Sku,
+                    CategoryName = p.Category?.Name,
+                    ImagePath = primaryImg?.FilePath,
+                    ThumbPath = primaryImg?.ThumbPath,
+                    OrderCount = 0,
+                    TotalQuantity = 0
+                };
+            }).ToList();
         }
 
         private string GetWelcomeMessage()

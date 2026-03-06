@@ -1,149 +1,258 @@
-﻿@model SupplierInventorySystem.Models.Product
+@model SupplierInventorySystem.Models.Product
 @using System
 @using System.Globalization
 @{
     ViewData["Title"] = "פרטי מוצר";
-    var currencyCulture = CultureInfo.CurrentCulture; // אפשר לשנות ל-"he-IL" אם רוצים פורמט ישראלי: CultureInfo.GetCultureInfo("he-IL")
+    var currencyCulture = CultureInfo.CurrentCulture;
+    var primaryImage = Model?.ProductImages?.FirstOrDefault(i => i.IsPrimary) ?? Model?.ProductImages?.FirstOrDefault();
+    var allImages = Model?.ProductImages?.OrderBy(i => i.DisplayOrder).ToList();
 }
 
 <h2>פרטי מוצר</h2>
 
-<div>
-    <h4>@Model?.Name @(@Model != null ? "(" + Model.Sku + ")" : "")</h4>
-    <dl class="row">
-        <dt class="col-sm-3">קטגוריה</dt>
-        <dd class="col-sm-9">@Model?.Category?.Name</dd>
-
-        <dt class="col-sm-3">מק"ט</dt>
-        <dd class="col-sm-9">@Model?.Sku</dd>
-
-        <dt class="col-sm-3">יחידת ברירת מחדל</dt>
-        <dd class="col-sm-9">@Model?.DefaultUnit?.Code</dd>
-
-        <dt class="col-sm-3">תיאור</dt>
-        <dd class="col-sm-9">@Model?.Description</dd>
-
-        <dt class="col-sm-3">מוצר שירות</dt>
-        <dd class="col-sm-9">@(Model?.IsService == true ? "כן" : "לא")</dd>
-
-        <dt class="col-sm-3">עוקב סריאלים</dt>
-        <dd class="col-sm-9">@(Model?.TrackSerials == true ? "כן" : "לא")</dd>
-
-        <dt class="col-sm-3">עוקב לוטים</dt>
-        <dd class="col-sm-9">@(Model?.TrackLots == true ? "כן" : "לא")</dd>
-
-        <dt class="col-sm-3">נקודת הזמנה</dt>
-        <dd class="col-sm-9">
-            @{
-                string rp = "";
-                if (Model?.ReorderPoint != null)
+<div class="row">
+    <!-- Product Image Gallery -->
+    <div class="col-md-5 mb-4">
+        <div class="card">
+            <div class="card-body p-2">
+                @if (allImages != null && allImages.Any())
                 {
-                    rp = Convert.ToDecimal(Model.ReorderPoint).ToString("0.####", CultureInfo.InvariantCulture);
-                }
-            }
-            @rp
-        </dd>
+                    <!-- Main Image -->
+                    <div class="main-image-container text-center mb-3">
+                        <img src="@primaryImage?.FilePath"
+                             class="img-fluid rounded product-main-image"
+                             id="mainProductImage"
+                             alt="@Model?.Name"
+                             style="max-height: 400px; cursor: pointer;"
+                             onclick="openLightbox(this.src)" />
+                    </div>
 
-        <dt class="col-sm-3">כמות הזמנה</dt>
-        <dd class="col-sm-9">
-            @{
-                string rq = "";
-                if (Model?.ReorderQty != null)
+                    <!-- Thumbnails -->
+                    @if (allImages.Count > 1)
+                    {
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            @foreach (var image in allImages)
+                            {
+                                <img src="@image.ThumbPath"
+                                     data-full="@image.FilePath"
+                                     class="product-thumbnail @(image.IsPrimary ? "active" : "")"
+                                     alt="@image.OriginalFileName"
+                                     onclick="switchMainImage(this)" />
+                            }
+                        </div>
+                    }
+                }
+                else
                 {
-                    rq = Convert.ToDecimal(Model.ReorderQty).ToString("0.####", CultureInfo.InvariantCulture);
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-image fa-4x mb-3 opacity-25"></i>
+                        <p>לא הועלו תמונות למוצר זה</p>
+                        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-upload"></i> העלה תמונות
+                        </a>
+                    </div>
                 }
-            }
-            @rq
-        </dd>
+            </div>
+        </div>
+    </div>
 
-        <dt class="col-sm-3">סטטוס</dt>
-        <dd class="col-sm-9">@((Model?.Active == true) ? "פעיל" : "לא פעיל")</dd>
-    </dl>
+    <!-- Product Details -->
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">@Model?.Name @(@Model != null ? "(" + Model.Sku + ")" : "")</h4>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">קטגוריה</dt>
+                    <dd class="col-sm-8">@Model?.Category?.Name</dd>
+
+                    <dt class="col-sm-4">מק"ט</dt>
+                    <dd class="col-sm-8">@Model?.Sku</dd>
+
+                    <dt class="col-sm-4">יחידת ברירת מחדל</dt>
+                    <dd class="col-sm-8">@Model?.DefaultUnit?.Code</dd>
+
+                    <dt class="col-sm-4">תיאור</dt>
+                    <dd class="col-sm-8">@Model?.Description</dd>
+
+                    <dt class="col-sm-4">מוצר שירות</dt>
+                    <dd class="col-sm-8">@(Model?.IsService == true ? "כן" : "לא")</dd>
+
+                    <dt class="col-sm-4">עוקב סריאלים</dt>
+                    <dd class="col-sm-8">@(Model?.TrackSerials == true ? "כן" : "לא")</dd>
+
+                    <dt class="col-sm-4">עוקב לוטים</dt>
+                    <dd class="col-sm-8">@(Model?.TrackLots == true ? "כן" : "לא")</dd>
+
+                    <dt class="col-sm-4">נקודת הזמנה</dt>
+                    <dd class="col-sm-8">
+                        @{
+                            string rp = "";
+                            if (Model?.ReorderPoint != null)
+                            {
+                                rp = Convert.ToDecimal(Model.ReorderPoint).ToString("0.####", CultureInfo.InvariantCulture);
+                            }
+                        }
+                        @rp
+                    </dd>
+
+                    <dt class="col-sm-4">כמות הזמנה</dt>
+                    <dd class="col-sm-8">
+                        @{
+                            string rq = "";
+                            if (Model?.ReorderQty != null)
+                            {
+                                rq = Convert.ToDecimal(Model.ReorderQty).ToString("0.####", CultureInfo.InvariantCulture);
+                            }
+                        }
+                        @rq
+                    </dd>
+
+                    <dt class="col-sm-4">סטטוס</dt>
+                    <dd class="col-sm-8">
+                        @if (Model?.Active == true)
+                        {
+                            <span class="badge bg-success">פעיל</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">לא פעיל</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
 </div>
 
 @if (Model?.SupplierProducts != null && Model.SupplierProducts.Any())
 {
-    <h4>ספקים שמספקים מוצר זה</h4>
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>ספק</th>
-                <th>מק"ט ספק</th>
-                <th class="text-right">מחיר</th>
-                <th class="text-right">זמני אספקה (ימים)</th>
-                <th class="text-right">כמות מינימום</th>
-                <th>מטבע</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var sp in Model.SupplierProducts)
-            {
-                <tr>
-                    <td>@sp?.Supplier?.Name</td>
-                    <td>@sp?.SupplierSku</td>
-                    <td class="text-right">
-                        @{
-                            string priceText = "";
-                            if (sp?.Price != null)
-                            {
-                                // פורמט מטבע לפי התרבות הנוכחית (ניתן לשנות ל- he-IL)
-                                priceText = Convert.ToDecimal(sp.Price).ToString("C", currencyCulture);
-                            }
-                        }
-                        @priceText
-                    </td>
-                    <td class="text-right">@sp?.LeadTimeDays</td>
-                    <td class="text-right">
-                        @{
-                            string moqText = "";
-                            if (sp?.MinOrderQty != null)
-                            {
-                                moqText = Convert.ToDecimal(sp.MinOrderQty).ToString("0.####", CultureInfo.InvariantCulture);
-                            }
-                        }
-                        @moqText
-                    </td>
-                    <td>@sp?.Currency</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4 class="mb-0"><i class="fas fa-truck"></i> ספקים שמספקים מוצר זה</h4>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>ספק</th>
+                        <th>מק"ט ספק</th>
+                        <th class="text-right">מחיר</th>
+                        <th class="text-right">זמני אספקה (ימים)</th>
+                        <th class="text-right">כמות מינימום</th>
+                        <th>מטבע</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sp in Model.SupplierProducts)
+                    {
+                        <tr>
+                            <td>@sp?.Supplier?.Name</td>
+                            <td>@sp?.SupplierSku</td>
+                            <td class="text-right">
+                                @{
+                                    string priceText = "";
+                                    if (sp?.Price != null)
+                                    {
+                                        priceText = Convert.ToDecimal(sp.Price).ToString("C", currencyCulture);
+                                    }
+                                }
+                                @priceText
+                            </td>
+                            <td class="text-right">@sp?.LeadTimeDays</td>
+                            <td class="text-right">
+                                @{
+                                    string moqText = "";
+                                    if (sp?.MinOrderQty != null)
+                                    {
+                                        moqText = Convert.ToDecimal(sp.MinOrderQty).ToString("0.####", CultureInfo.InvariantCulture);
+                                    }
+                                }
+                                @moqText
+                            </td>
+                            <td>@sp?.Currency</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 @if (Model?.PriceHistories != null && Model.PriceHistories.Any())
 {
-    <h4>היסטוריית מחירים (עד 10 אחרונים)</h4>
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>תאריך</th>
-                <th>ספק</th>
-                <th class="text-right">מחיר</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var ph in Model.PriceHistories)
-            {
-                <tr>
-                    <td>@(ph?.EffectiveFrom?.ToString("yyyy-MM-dd") ?? "")</td>
-                    <td>@ph?.Supplier?.Name</td>
-                    <td class="text-right">
-                        @{
-                            string phPrice = "";
-                            if (ph?.Price != null)
-                            {
-                                phPrice = Convert.ToDecimal(ph.Price).ToString("C", currencyCulture);
-                            }
-                        }
-                        @phPrice
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4 class="mb-0"><i class="fas fa-history"></i> היסטוריית מחירים (עד 10 אחרונים)</h4>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>תאריך</th>
+                        <th>ספק</th>
+                        <th class="text-right">מחיר</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ph in Model.PriceHistories)
+                    {
+                        <tr>
+                            <td>@(ph?.EffectiveFrom?.ToString("yyyy-MM-dd") ?? "")</td>
+                            <td>@ph?.Supplier?.Name</td>
+                            <td class="text-right">
+                                @{
+                                    string phPrice = "";
+                                    if (ph?.Price != null)
+                                    {
+                                        phPrice = Convert.ToDecimal(ph.Price).ToString("C", currencyCulture);
+                                    }
+                                }
+                                @phPrice
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 <div class="mt-3">
-    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">ערוך</a>
-    <a asp-action="Index" class="btn btn-secondary">חזור לרשימה</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning"><i class="fas fa-edit"></i> ערוך</a>
+    <a asp-action="Index" class="btn btn-secondary"><i class="fas fa-arrow-right"></i> חזור לרשימה</a>
 </div>
+
+<!-- Lightbox Modal -->
+<div class="modal fade" id="imageLightbox" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="lightboxImage" src="" class="img-fluid" style="max-height: 85vh;" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchMainImage(thumb) {
+            var fullSrc = thumb.getAttribute('data-full');
+            document.getElementById('mainProductImage').src = fullSrc;
+
+            // Update active state
+            document.querySelectorAll('.product-thumbnail').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        }
+
+        function openLightbox(src) {
+            document.getElementById('lightboxImage').src = src;
+            var modal = new bootstrap.Modal(document.getElementById('imageLightbox'));
+            modal.show();
+        }
+    </script>
+}

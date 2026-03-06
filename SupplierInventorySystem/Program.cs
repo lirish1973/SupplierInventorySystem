@@ -18,6 +18,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ⭐ Authentication Service - חשוב!
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Image Service
+builder.Services.AddScoped<IImageService, ImageService>();
+
 // Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

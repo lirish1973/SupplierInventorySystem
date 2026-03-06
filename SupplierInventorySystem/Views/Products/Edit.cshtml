@@ -1,4 +1,4 @@
-﻿@model SupplierInventorySystem.Models.Product
+@model SupplierInventorySystem.Models.Product
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using System
 @{
@@ -94,6 +94,117 @@
     </div>
 </div>
 
+<!-- Image Gallery Management Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-images"></i> ניהול תמונות</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-danger d-none" id="btnDeleteSelected"
+                            onclick="deleteSelectedImages()">
+                        <i class="fas fa-trash"></i> מחק נבחרים (<span id="selectedCount">0</span>)
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Upload Area -->
+                <div class="upload-area" id="imageUploadArea">
+                    <input type="file" id="imageFileInput" multiple accept="image/*" style="display:none;" />
+                    <div class="upload-prompt" id="uploadPrompt">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-2"></i>
+                        <p class="mb-1">גרור תמונות לכאן או לחץ לבחירה</p>
+                        <small class="text-muted">נתמכים: JPG, PNG, GIF, WEBP | מקס: 5MB לקובץ</small>
+                        <br />
+                        <button type="button" class="btn btn-primary mt-2" onclick="document.getElementById('imageFileInput').click()">
+                            <i class="fas fa-plus"></i> בחר תמונות
+                        </button>
+                    </div>
+                    <!-- Progress bar -->
+                    <div class="progress d-none mt-3" id="uploadProgress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Upload Messages -->
+                <div id="uploadMessages" class="mt-2"></div>
+
+                <!-- Existing Images Grid -->
+                <div id="imagesGrid" class="row mt-3 g-3">
+                    @if (Model?.ProductImages != null)
+                    {
+                        @foreach (var image in Model.ProductImages.OrderBy(i => i.DisplayOrder))
+                        {
+                            <div class="col-6 col-md-4 col-lg-3 image-grid-item" data-image-id="@image.Id">
+                                <div class="card h-100 @(image.IsPrimary ? "border-primary border-2" : "")">
+                                    <div class="position-relative">
+                                        <input type="checkbox" class="image-checkbox position-absolute"
+                                               style="top: 8px; right: 8px; z-index: 2; width: 20px; height: 20px;"
+                                               onchange="updateSelectedCount()" />
+                                        <img src="@image.ThumbPath" class="card-img-top"
+                                             alt="@image.OriginalFileName"
+                                             style="height: 180px; object-fit: cover; cursor: pointer;"
+                                             onclick="openLightbox('@image.FilePath')" />
+                                        @if (image.IsPrimary)
+                                        {
+                                            <span class="badge bg-primary position-absolute" style="top: 8px; left: 8px;">
+                                                <i class="fas fa-star"></i> ראשית
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="card-body p-2 text-center">
+                                        <small class="text-muted text-truncate d-block">@image.OriginalFileName</small>
+                                        <small class="text-muted">@((image.FileSize / 1024.0).ToString("0.0")) KB</small>
+                                        <div class="mt-1">
+                                            @if (!image.IsPrimary)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                                        onclick="setPrimary(@Model.Id, @image.Id)"
+                                                        title="הגדר כתמונה ראשית">
+                                                    <i class="fas fa-star"></i>
+                                                </button>
+                                            }
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="deleteSingleImage(@image.Id)"
+                                                    title="מחק תמונה">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox Modal -->
+<div class="modal fade" id="imageLightbox" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="lightboxImage" src="" class="img-fluid" style="max-height: 85vh;" />
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/product-images.js"></script>
+    <script>
+        var productId = @Model.Id;
+        var antiForgeryToken = '@Html.AntiForgeryToken()';
+        // Extract the token value
+        var tokenMatch = antiForgeryToken.match(/value="([^"]+)"/);
+        var tokenValue = tokenMatch ? tokenMatch[1] : '';
+
+        initImageUpload(productId, tokenValue);
+    </script>
 }

@@ -76,5 +76,6 @@ namespace SupplierInventorySystem.Models
         public ICollection<ProductVariant>? ProductVariants { get; set; }
         public ICollection<SupplierProduct>? SupplierProducts { get; set; }
         public ICollection<ProductPriceHistory>? PriceHistories { get; set; }
+        public ICollection<ProductImage>? ProductImages { get; set; }
     }
 }

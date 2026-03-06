@@ -28,6 +28,19 @@ namespace SupplierInventorySystem.ViewModels
         public List<Supplier> RecentSuppliers { get; set; } = new();
         public List<CategoryStatDto> ProductsByCategory { get; set; } = new();
         public List<AlertDto> Alerts { get; set; } = new();
+        public List<TopProductDto> TopProducts { get; set; } = new();
+    }
+
+    public class TopProductDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Sku { get; set; } = string.Empty;
+        public string? CategoryName { get; set; }
+        public string? ImagePath { get; set; }
+        public string? ThumbPath { get; set; }
+        public int OrderCount { get; set; }
+        public decimal TotalQuantity { get; set; }
     }
 
     public class LowStockProductDto
