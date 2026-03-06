@@ -82,11 +82,17 @@
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" || ViewContext.RouteData.Values["controller"]?.ToString() == "Roles" ? "active" : "")"
+                                <a class="nav-link dropdown-toggle @(new[]{"Users","Roles","Admin"}.Contains(ViewContext.RouteData.Values["controller"]?.ToString()) ? "active" : "")"
                                    href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-cogs"></i> ניהול
                                 </a>
                                 <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">
+                                            <i class="fas fa-tachometer-alt"></i> <strong>לוח בקרה ניהולי</strong>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item" asp-controller="Users" asp-action="Index">
                                             <i class="fas fa-users"></i> ניהול משתמשים

@@ -1,0 +1,312 @@
+@model SupplierInventorySystem.ViewModels.AdminDashboardViewModel
+@using SupplierInventorySystem.ViewModels
+@{
+    ViewData["Title"] = "לוח בקרה ניהולי";
+    var allRoles = ViewBag.AllRoles as List<RoleViewModel> ?? new List<RoleViewModel>();
+    var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="fas fa-cogs"></i> לוח בקרה ניהולי</h2>
+    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+        <i class="fas fa-user-plus"></i> הוסף משתמש
+    </button>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show py-2">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show py-2">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* ===== כרטיסי סיכום ===== *@
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-primary text-white text-center py-2">
+            <div class="card-body p-2">
+                <div class="fs-2 fw-bold">@Model.TotalUsers</div>
+                <div class="small"><i class="fas fa-users"></i> סה"כ משתמשים</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-success text-white text-center py-2">
+            <div class="card-body p-2">
+                <div class="fs-2 fw-bold">@Model.ActiveUsers</div>
+                <div class="small"><i class="fas fa-check-circle"></i> פעילים</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-secondary text-white text-center py-2">
+            <div class="card-body p-2">
+                <div class="fs-2 fw-bold">@Model.InactiveUsers</div>
+                <div class="small"><i class="fas fa-ban"></i> לא פעילים</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 @(Model.LockedUsers > 0 ? "bg-danger" : "bg-warning") text-white text-center py-2">
+            <div class="card-body p-2">
+                <div class="fs-2 fw-bold">@Model.LockedUsers</div>
+                <div class="small"><i class="fas fa-lock"></i> נעולים</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===== Layout דו-טורי ===== *@
+<div class="row g-3">
+
+    @* ===== עמודה ראשית: משתמשים ===== *@
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+                <span><i class="fas fa-users"></i> ניהול משתמשים</span>
+                <a asp-controller="Users" asp-action="Index" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-external-link-alt"></i> רשימה מלאה
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0 align-middle">
+                        <thead class="table-secondary">
+                            <tr>
+                                <th>משתמש</th>
+                                <th>תפקיד</th>
+                                <th class="text-center">סטטוס</th>
+                                <th class="text-center">כניסה אחרונה</th>
+                                <th class="text-center">פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.Users)
+                            {
+                                <tr class="@(user.IsLocked ? "table-danger" : !user.IsActive ? "table-secondary" : "")">
+                                    <td>
+                                        <div class="fw-semibold">@user.Username</div>
+                                        <div class="text-muted" style="font-size:0.75rem">@user.Email</div>
+                                        @if (!string.IsNullOrEmpty(user.FullName))
+                                        {
+                                            <div class="text-muted" style="font-size:0.75rem">@user.FullName</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @* שינוי תפקיד inline *@
+                                        <form asp-action="QuickChangeRole" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@user.Id" />
+                                            <select name="roleId" class="form-select form-select-sm" style="width:auto; min-width:90px;"
+                                                    onchange="this.form.submit()" @(user.Id == currentUserId ? "disabled" : "")>
+                                                <option value="">-- אין --</option>
+                                                @foreach (var role in allRoles)
+                                                {
+                                                    if (user.RoleName == role.Name)
+                                                    {
+                                                        <option value="@role.Id" selected="selected">@role.Name</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@role.Id">@role.Name</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </form>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (user.IsLocked)
+                                        {
+                                            <span class="badge bg-danger"><i class="fas fa-lock"></i> נעול</span>
+                                        }
+                                        else if (user.IsActive)
+                                        {
+                                            <span class="badge bg-success"><i class="fas fa-check"></i> פעיל</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary"><i class="fas fa-ban"></i> לא פעיל</span>
+                                        }
+                                    </td>
+                                    <td class="text-center small text-muted">
+                                        @(user.LastLogin.HasValue ? user.LastLogin.Value.ToString("dd/MM/yy HH:mm") : "מעולם לא")
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-controller="Users" asp-action="Edit" asp-route-id="@user.Id"
+                                               class="btn btn-outline-primary" title="עריכה">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+
+                                            @if (user.IsLocked)
+                                            {
+                                                <form asp-action="QuickUnlock" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <button type="submit" class="btn btn-outline-warning" title="שחרר נעילה">
+                                                        <i class="fas fa-unlock"></i>
+                                                    </button>
+                                                </form>
+                                            }
+
+                                            @if (user.Id != currentUserId)
+                                            {
+                                                <form asp-action="QuickToggleActive" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <button type="submit"
+                                                            class="btn @(user.IsActive ? "btn-outline-secondary" : "btn-outline-success")"
+                                                            title="@(user.IsActive ? "השבת" : "הפעל")">
+                                                        <i class="fas @(user.IsActive ? "fa-user-slash" : "fa-user-check")"></i>
+                                                    </button>
+                                                </form>
+
+                                                <a asp-controller="Users" asp-action="ResetPassword" asp-route-id="@user.Id"
+                                                   class="btn btn-outline-danger" title="אפס סיסמה">
+                                                    <i class="fas fa-key"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ===== עמודה צדדית: תפקידים ===== *@
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+                <span><i class="fas fa-user-tag"></i> תפקידים (@Model.TotalRoles)</span>
+                <a asp-controller="Roles" asp-action="Index" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-cog"></i> ניהול
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var role in Model.Roles)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <span class="fw-semibold">@role.Name</span>
+                                @if (!string.IsNullOrEmpty(role.Description))
+                                {
+                                    <br /><small class="text-muted">@role.Description</small>
+                                }
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary rounded-pill">@role.UserCount</span>
+                                <a asp-controller="Roles" asp-action="Edit" asp-route-id="@role.Id"
+                                   class="btn btn-outline-secondary btn-sm py-0" title="ערוך">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            @* הוסף תפקיד חדש - inline *@
+            <div class="card-footer">
+                <form asp-action="QuickAddRole" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="input-group input-group-sm mb-1">
+                        <input type="text" name="roleName" class="form-control" placeholder="שם תפקיד חדש" required />
+                        <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <input type="text" name="roleDescription" class="form-control form-control-sm" placeholder="תיאור (אופציונלי)" />
+                </form>
+            </div>
+        </div>
+
+        @* קישורים מהירים *@
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white py-2">
+                <i class="fas fa-bolt"></i> פעולות מהירות
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-controller="Users" asp-action="Create" class="list-group-item list-group-item-action py-2">
+                    <i class="fas fa-user-plus text-success"></i> הוסף משתמש
+                </a>
+                <a asp-controller="Users" asp-action="Index" class="list-group-item list-group-item-action py-2">
+                    <i class="fas fa-users text-primary"></i> רשימת משתמשים מלאה
+                </a>
+                <a asp-controller="Roles" asp-action="Create" class="list-group-item list-group-item-action py-2">
+                    <i class="fas fa-user-tag text-info"></i> צור תפקיד חדש
+                </a>
+                <a asp-controller="Home" asp-action="Index" class="list-group-item list-group-item-action py-2">
+                    <i class="fas fa-home text-secondary"></i> חזרה לדשבורד ראשי
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===== מודל: הוסף משתמש ===== *@
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="fas fa-user-plus"></i> הוסף משתמש חדש</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="QuickAddUser" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label form-label-sm">שם משתמש *</label>
+                            <input type="text" name="Username" class="form-control form-control-sm" required minlength="3" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label form-label-sm">שם מלא</label>
+                            <input type="text" name="FullName" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label form-label-sm">דוא"ל *</label>
+                            <input type="email" name="Email" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label form-label-sm">סיסמה *</label>
+                            <input type="password" name="Password" class="form-control form-control-sm" required minlength="6" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label form-label-sm">תפקיד</label>
+                            <select name="RoleId" class="form-select form-select-sm">
+                                <option value="">-- בחר תפקיד --</option>
+                                @foreach (var role in allRoles)
+                                {
+                                    <option value="@role.Id">@role.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input type="checkbox" name="IsActive" value="true" class="form-check-input" id="isActiveCheck" checked />
+                                <label class="form-check-label" for="isActiveCheck">משתמש פעיל</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ביטול</button>
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="fas fa-save"></i> צור משתמש
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -118,6 +118,41 @@ namespace SupplierInventorySystem.ViewModels
         public int UserCount { get; set; }
     }
 
+    // ViewModel for Admin Dashboard
+    public class AdminDashboardViewModel
+    {
+        public int TotalUsers { get; set; }
+        public int ActiveUsers { get; set; }
+        public int InactiveUsers { get; set; }
+        public int LockedUsers { get; set; }
+        public int TotalRoles { get; set; }
+        public List<UserListViewModel> Users { get; set; } = new();
+        public List<RoleViewModel> Roles { get; set; } = new();
+    }
+
+    // ViewModel for quick-add user from dashboard
+    public class QuickAddUserViewModel
+    {
+        [Required(ErrorMessage = "שדה חובה")]
+        [StringLength(100, MinimumLength = 3)]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "שדה חובה")]
+        [EmailAddress(ErrorMessage = "דוא\"ל לא תקין")]
+        public string Email { get; set; } = string.Empty;
+
+        [StringLength(255)]
+        public string? FullName { get; set; }
+
+        [Required(ErrorMessage = "שדה חובה")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "לפחות 6 תווים")]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = string.Empty;
+
+        public int? RoleId { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
     // ViewModel for user details
     public class UserDetailsViewModel
     {
